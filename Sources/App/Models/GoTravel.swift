@@ -22,10 +22,10 @@ final class GoTravel: Model, @unchecked Sendable, Content {
     var destination: Place
     
     @Field(key: "group_leader")
-    var groupLeader: DBRef //GoUser
+    var groupLeader: MongoRef //GoUser
     
     @Field(key: "travelers")
-    var travelers: [DBRef] //GoUser[]
+    var travelers: [MongoRef] //GoUser[]
     
     @Field(key: "meeting_date")
     var meetingDate: Date?

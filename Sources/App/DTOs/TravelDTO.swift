@@ -22,12 +22,12 @@ struct GoMatchDTO: Content {
 extension GoMatchDTO {
     func toModel() -> GoMatch {
         GoMatch(id: id,
-                poster: DBRef(id: self.poster.id!),
+                poster: MongoRef(id: self.poster.id!),
                 currentUbication: self.currentUbication,
                 destination: self.destination,
                 groupLength: self.groupLength,
                 status: self.status,
-                viewers: self.viewers.compactMap { $0.id }.map { DBRef(id: $0) }
+                viewers: self.viewers.compactMap { $0.id }.map { MongoRef(id: $0) }
         )
     }
 }
@@ -55,7 +55,7 @@ extension GoMatch {
 }
 
 struct GoMatchPost: Content {
-    var poster: DBRef
+    var poster: MongoRef
     var currentUbication: Place
     var destination: Place
     var groupLength: Int

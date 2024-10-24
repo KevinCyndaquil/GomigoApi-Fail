@@ -88,7 +88,7 @@ struct MatchController: RouteCollection {
     
     @Sendable
     func look(req: Request) async throws -> GoMatchDTO {
-        guard let matchRef: DBRef = try? req.content.decode(DBRef.self) else {
+        guard let matchRef: MongoRef = try? req.content.decode(MongoRef.self) else {
             throw Abort(.badRequest, reason: "match id es invalida")
         }
         

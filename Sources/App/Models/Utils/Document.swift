@@ -8,12 +8,13 @@
 import Vapor
 import Fluent
 
-enum DbDocuments: String {
-    case users = "users"
-    case matchs = "matches"
+enum Documents: String {
+    case user = "users"
+    case match = "matches"
 }
 
-final class DBRef: Fields, @unchecked Sendable, Content {
+final class MongoRef: Fields, @unchecked Sendable, Content {
+    
     @Field(key: "id")
     var id: UUID
     

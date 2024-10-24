@@ -17,7 +17,7 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     var id: UUID?
     
     @Field(key: "poster")
-    var poster: DBRef //GoUser
+    var poster: MongoRef //GoUser
     
     @Field(key: "current_ubication")
     var currentUbication: Place
@@ -35,18 +35,18 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     var status: Status
     
     @Field(key: "viewers")
-    var viewers: [DBRef] //GoUser
+    var viewers: [MongoRef] //GoUser
     
     init() { }
     
     init(id: UUID? = nil,
-         poster: DBRef,
+         poster: MongoRef,
          currentUbication: Place,
          destination: Place,
          travel: GoTravel? = nil,
          groupLength: Int,
          status: Status,
-         viewers: [DBRef]){
+         viewers: [MongoRef]){
         self.id = id
         self.poster = poster
         self.currentUbication = currentUbication
@@ -63,6 +63,9 @@ final class GoMatch: Model, @unchecked Sendable, Content {
         case waiting
         case not_matched
     }
+}
+
+extension GoMatch {
     
     func nearest(from matches: [GoMatch]) -> [GoMatch] {
         let currentH3Index = currentUbication.toH3Index()
@@ -86,5 +89,16 @@ final class GoMatch: Model, @unchecked Sendable, Content {
         }
         
         return nearestMatches
+    }
+}
+
+extension GoMatch: Hashable {
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: GoMatch, rhs: GoMatch) -> Bool {
+        lhs.id == rhs.id
     }
 }

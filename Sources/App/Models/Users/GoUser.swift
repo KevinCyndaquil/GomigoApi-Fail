@@ -9,7 +9,7 @@ import Vapor
 import Fluent
 
 final class GoUser: Model, @unchecked Sendable, Content {
-    static let schema = DbDocuments.users.rawValue
+    static let schema = Documents.user.rawValue
     
     @ID(key: .id)
     var id: UUID?
@@ -42,7 +42,7 @@ final class GoUser: Model, @unchecked Sendable, Content {
     var contact: GoContact
     
     @Field(key: "friends")
-    var friends: [DBRef] //GoUser
+    var friends: [MongoRef] //GoUser
     
     
     init() { }
@@ -57,7 +57,7 @@ final class GoUser: Model, @unchecked Sendable, Content {
          properties: GoPersonalProperties,
          preferences: GoPreferences,
          contact: GoContact,
-         friends: [DBRef]) {
+         friends: [MongoRef]) {
         self.id = id
         self.nickname = nickname
         self.password = password

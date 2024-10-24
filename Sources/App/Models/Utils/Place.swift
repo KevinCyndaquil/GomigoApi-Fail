@@ -7,6 +7,7 @@
 
 import Vapor
 import Fluent
+import CoreLocation
 
 final class Place: Fields, @unchecked Sendable, Content {
     static let h3Resolution: Int32 = 10
@@ -38,6 +39,20 @@ extension Place {
     }
     
     func distance(to: Place) -> Double {
+        let coorRad1 = [
+            self.latitude * .pi / 180,
+            self.longitude * .pi / 180,
+        ]
+        let coorRad2 = [
+            to.latitude * .pi / 180,
+            to.longitude * .pi / 180,
+        ]
+        
+        let dLat = coorRad2[0] - coorRad1[0]
+        let dLon = coorRad2[1] - coorRad1[1]
+        
+        let a = pow(sin(dLat / 2), 2) + cos(coorRad1[0]) * cos(<#T##Double#>)
+        
         return 0;
     }
 }
