@@ -1,0 +1,24 @@
+[
+    {
+        "poster": {
+            "id": "C51B483A-7521-4D31-AB75-7E483FF87975"
+        },
+        "currentUbication": {
+            "country": "mexico",
+            "city": "tapachula",
+            "name": "unach",
+            "type": "school",
+            "coordinates": "90121"
+        },
+        "destination": {
+            "country": "mexico",
+            "city": "tapachula",
+            "name": "unach",
+            "type": "school",
+            "coordinates": "90121"
+        },
+        "groupLength": 2,
+        "status": "processing",
+        "viewers": []
+    }
+]

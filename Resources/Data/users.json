@@ -1,0 +1,40 @@
+{
+    "nickname": "kevincyn",
+    "password": "oa",
+    "preferences": {
+        "matchWithSex": [],
+        "matchWithGender": [],
+        "matchAge": ["childhood", "elder"],
+        "emergencyContact": [],
+        "matchForeigns": false,
+        "matchOtherNationalities": true
+    },
+    "score": 0,
+    "description": "hola",
+    "files": {
+        "curp": "kafg"
+    },
+    "properties": {
+        "name": "kevin alejandro",
+        "lastname": "francisco gonzalez",
+        "sex": "male",
+        "gender": "male",
+        "nationality": "mexicano",
+        "birthday": "2003-05-18T00:00:00Z",
+        "age": 21
+    },
+    "contact": {
+        "phoneNumber": "962 185",
+        "emailAddress": "kevin@unach.mx",
+        "facebook": "http:/facebooj.com/kevin"
+    },
+    "stadistics": {
+        "walkedKilometers": 100.0,
+        "visitedCities": 1,
+        "archivements": []
+    },
+    "friends": [
+
+    ]
+}
+
