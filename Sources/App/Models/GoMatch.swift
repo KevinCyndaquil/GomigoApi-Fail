@@ -1,50 +1,15 @@
 //
-//  Match.swift
+//  GoMatch.swift
 //  GoMigoAPI
 //
-//  Created by ADMIN UNACH on 21/10/24.
+//  Created by ADMIN UNACH on 24/10/24.
 //
 
 import Vapor
 import Fluent
-import Foundation
 
 import Ch3
 
-final class GoTravel: Model, @unchecked Sendable, Content {
-    static let schema = "travels"
-    
-    @ID(key: .id)
-    var id: UUID?
-    
-    @Field(key: "meeting_point")
-    var meetingPoint: Place?
-    
-    @Field(key: "destination")
-    var destination: Place
-    
-    @Field(key: "group_leader")
-    var groupLeader: DBRef //GoUser
-    
-    @Field(key: "travelers")
-    var travelers: [DBRef] //GoUser[]
-    
-    @Field(key: "meeting_date")
-    var meetingDate: Date?
-    
-    @Field(key: "arrival_date")
-    var arrivalDate: Date?
-    
-    @Field(key: "transport_service")
-    var transport_service: TransportServices?
-    
-    @Field(key: "status")
-    var status: TravelStatus
-    
-}
-
-///This is the matcher object, and the flag to know when a user wants to travel.
-///First, the local user sends this object to server, then, the server save it and starts to match when a nearby user match when the requeriments
 final class GoMatch: Model, @unchecked Sendable, Content {
     static let schema: String = "matchs"
     

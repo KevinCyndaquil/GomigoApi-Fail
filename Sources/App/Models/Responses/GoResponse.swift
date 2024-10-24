@@ -1,32 +1,12 @@
 //
-//  Travel.swift
-//  GoMigoModel
+//  GoResponse.swift
+//  GoMigoAPI
 //
-//  Created by ADMIN UNACH on 15/10/24.
+//  Created by ADMIN UNACH on 24/10/24.
 //
 
 import Vapor
 import Fluent
-
-
-final class GoRequest: Fields, @unchecked Sendable, Content {
-    
-    @Field(key: "match_request")
-    var matchRequest: GoMatch
-    
-    @Field(key: "from")
-    var from: GoUser
-    
-    @Field(key: "to")
-    var to: GoUser
-    
-    @Field(key: "current_ubication")
-    var currentUbication: Place?
-    
-    @Field(key: "reason")
-    var reason: GoReason
-    
-}
 
 final class GoResponse: Fields, @unchecked Sendable, Content {
     
@@ -71,10 +51,4 @@ final class GoResponse: Fields, @unchecked Sendable, Content {
         case denied
         case ignored
     }
-}
-
-enum GoReason: String, Content {
-    case match_request
-    case ask_request
-    case response_request
 }

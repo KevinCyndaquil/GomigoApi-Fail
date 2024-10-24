@@ -8,8 +8,6 @@
 import Vapor
 import Fluent
 
-import SwiftH3
-
 struct MatchController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let matchRouter = routes.grouped("match")
