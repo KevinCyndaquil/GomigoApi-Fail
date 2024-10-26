@@ -8,7 +8,7 @@
 import Vapor
 import Fluent
 
-struct UserController: RouteCollection {
+struct GoUserController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let userRoute = routes.grouped("user")
         

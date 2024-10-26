@@ -30,4 +30,7 @@ final class GoPersonalProperties: Fields, @unchecked Sendable {
     
     @Field(key: "age")
     var age: Int
+    
+    @Field(key: "emergency_contact")
+    var emergencyContact: [GoContact]
 }

@@ -29,6 +29,46 @@ final class Place: Fields, @unchecked Sendable, Content {
     
     @Field(key: "longitude")
     var longitude: Double
+    
+    init() { }
+    
+    init(latitude: Double, longitude: Double) {
+        self.latitude = latitude
+        self.longitude = longitude
+    }
+}
+
+extension Place {
+    private static func toCartesian(coor: Place) -> (x: Double, y: Double, z: Double) {
+        let a = coor.latitude * .pi / 180
+        let b = coor.longitude * .pi / 180
+        let x = cos(a) * cos(b)
+        let y = cos(a) * sin(b)
+        let z = sin(b)
+        return (x, y, z)
+    }
+    
+    static func calculateMeetingPoint(people: [Place]) -> Place {
+        var coor = (x: 0.0, y: 0.0, z: 0.0)
+        
+        for person in people {
+            let (cartX, cartY, cartZ) = toCartesian(coor: person)
+            coor.x += cartX
+            coor.y += cartY
+            coor.z += cartZ
+        }
+        
+        let total = Double(people.count)
+        coor.x /= total
+        coor.y /= total
+        coor.z /= total
+        
+        let lon = atan2(coor.y, coor.x)
+        let hyp = sqrt(pow(coor.x, 2) + pow(coor.y, 2))
+        let lat = atan2(coor.z, hyp)
+        
+        return Place(latitude: lat * 180 / .pi, longitude: lon * 180 / .pi)
+    }
 }
 
 extension Place {

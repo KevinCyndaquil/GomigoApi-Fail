@@ -10,37 +10,41 @@ import Fluent
 
 final class GoPreferences: Fields, @unchecked Sendable {
     
-    @Field(key: "match_with_sex")
-    var matchWithSex: [String]
+    @Field(key: "matching_gender")
+    var matchingGender: Set<Gender>
     
-    @Field(key: "match_with_gender")
-    var matchWithGender: [Gender]
-    
-    @Field(key: "match_age")
-    var matchAge: [AgeRange]
-    
-    @Field(key: "emergency_contact")
-    var emergencyContact: [GoContact]
+    @Field(key: "age_range")
+    var ageRange: Set<AgeRange>
     
     @Field(key: "match_foreigns")
     var matchForeigns: Bool
     
-    @Field(key: "match_other_nationalities")
-    var matchOtherNationalities: Bool
-    
     init() { }
     
-    init(matchWithSex: [String], matchWithGender: [Gender], emergencyContact: [GoContact], matchForeigns: Bool, matchOtherNationalities: Bool) {
-        self.matchWithSex = matchWithSex
-        self.matchWithGender = matchWithGender
-        self.emergencyContact = emergencyContact
-        self.matchForeigns = matchForeigns
-        self.matchOtherNationalities = matchOtherNationalities
+    init(matchingGender: Set<Gender>, ageRange: Set<AgeRange>, matchForeignes: Bool) {
+        self.matchingGender = matchingGender
+        self.ageRange = ageRange
+        self.matchForeigns = matchForeignes
     }
     
-    static let def_preference = GoPreferences(
-        matchWithSex: ["male", "female"],
-        matchWithGender: [.female, .male, .no_binary],
-        emergencyContact: [], matchForeigns: true,
-        matchOtherNationalities: true)
+    static let common = GoPreferences(
+        matchingGender: [.female, .male, .no_binary],
+        ageRange: [.childhood, .elder],
+        matchForeignes: true)
+}
+
+extension GoPreferences {
+
+    func intersection(with groupB: GoPreferences) -> GoPreferences {
+        var matchingGender = self.matchingGender
+            .intersection(groupB.matchingGender)
+        var ageRange = self.ageRange
+            .intersection(groupB.ageRange)
+        var matchForeigns = self.matchForeigns && groupB.matchForeigns
+        
+        return GoPreferences(
+            matchingGender: matchingGender,
+            ageRange: ageRange,
+            matchForeignes: matchForeigns)
+    }
 }

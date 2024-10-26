@@ -8,11 +8,6 @@
 import Vapor
 import Fluent
 
-enum Documents: String {
-    case user = "users"
-    case match = "matches"
-}
-
 final class MongoRef: Fields, @unchecked Sendable, Content {
     
     @Field(key: "id")
@@ -20,7 +15,23 @@ final class MongoRef: Fields, @unchecked Sendable, Content {
     
     init() { }
     
+    init(from model: any Model) throws {
+        self.id = model.id as! UUID
+    }
+    
     init(id: UUID) {
         self.id = id
     }
+}
+
+extension MongoRef: Hashable {
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(id)
+    }
+    
+    static func == (lhs: MongoRef, rhs: MongoRef) -> Bool {
+        lhs.id == rhs.id
+    }
+    
 }

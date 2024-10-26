@@ -13,25 +13,44 @@ enum Gender: String, Content {
     case no_binary
 }
 
-enum AgeRange: String, Content {
-    case childhood
-    case puberty
-    case teenager
-    case young_adult
-    case elder
-}
-
-enum TravelStatus: String, Content {
-    case finished
-    case canceled
-    case waiting_travelers
-    case going_to_destination
-    case with_incidents
+enum AgeRange: Int, Content {
+    case childhood = 5
+    case puberty = 12
+    case teenager = 16
+    case young_adult = 20
+    case adult = 30
+    case elder = 55
+    
+    static func range(birthday: Date) -> AgeRange? {
+        let calendar = Calendar.current
+        let currentDate = Date()
+        let ageComponents = calendar.dateComponents([.year], from: birthday, to: currentDate)
+        
+        switch ageComponents.year ?? 0 {
+        case ..<AgeRange.childhood.rawValue:
+            return nil
+        case AgeRange.childhood.rawValue..<AgeRange.puberty.rawValue:
+            return .childhood
+        case AgeRange.puberty.rawValue..<AgeRange.teenager.rawValue:
+            return .puberty
+        case AgeRange.teenager.rawValue..<AgeRange.young_adult.rawValue:
+            return .teenager
+        case AgeRange.young_adult.rawValue..<AgeRange.adult.rawValue:
+            return .young_adult
+        case AgeRange.adult.rawValue..<AgeRange.elder.rawValue:
+            return .adult
+        default:
+            return .elder
+        }
+    }
 }
 
 enum TransportServices: String, Content {
-    case walk
-    case uber
     case taxi
+    case uber
+    case didi
     case public_transport
+    case mototaxi
+    case walking
+    case particular
 }

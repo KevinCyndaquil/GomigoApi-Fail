@@ -15,7 +15,7 @@ final class GoArchivement: Model, @unchecked Sendable {
     var id: UUID?
     
     @Field(key: "icon")
-    var icon: String
+    var icon: Data?
     
     @Field(key: "name")
     var name: String
@@ -28,7 +28,7 @@ final class GoArchivement: Model, @unchecked Sendable {
     
     init() { }
     
-    init(id: UUID? = nil, icon: String, name: String, description: String, progressNeeded: Float) {
+    init(id: UUID? = nil, icon: Data? = nil, name: String, description: String, progressNeeded: Float) {
         self.id = id
         self.icon = icon
         self.name = name

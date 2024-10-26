@@ -15,10 +15,9 @@ final class UserService {
         self.db = database
     }
     
-    func select(id: UUID) async throws -> GoUserDTO? {
+    func select(id: UUID) async throws -> GoUser? {
         try await GoUser.query(on: db)
             .filter(\.$id == id)
-            .first()?
-            .toDTO()
+            .first()
     }
 }

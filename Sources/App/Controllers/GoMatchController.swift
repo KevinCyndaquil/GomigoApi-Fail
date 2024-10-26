@@ -10,7 +10,7 @@ import Fluent
 import MongoKitten
 import FluentMongoDriver
 
-struct MatchController: RouteCollection {
+struct GoMatchController: RouteCollection {
     func boot(routes: any RoutesBuilder) throws {
         let matchRouter = routes.grouped("match")
         
