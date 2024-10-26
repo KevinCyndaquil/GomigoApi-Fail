@@ -8,16 +8,18 @@
             "city": "tapachula",
             "name": "unach",
             "type": "school",
-            "coordinates": "90121"
+            "latitude": 140.7812,
+            "longitude": -10.019
         },
         "destination": {
             "country": "mexico",
             "city": "tapachula",
             "name": "unach",
             "type": "school",
-            "coordinates": "90121"
+            "latitude": 90.231,
+            "longitude": -90.129
         },
-        "groupLength": 2,
+        "groupLength": 3,
         "status": "processing",
         "viewers": []
     }

@@ -17,6 +17,7 @@ struct GoMatchDTO: Content {
     var groupLength: Int
     var status: GoMatch.Status
     var viewers: [GoUserDTO]
+    var linkId: UUID?
 }
 
 extension GoMatchDTO {
@@ -38,10 +39,10 @@ extension GoMatch {
         
         let poster = try await userService.select(id: self.poster.id)!
         
-        var viewers: [GoUserDTO] = []
+        /*var viewers: [GoUserDTO] = []
         for v in self.viewers {
             try await viewers.append(userService.select(id: v.id)!)
-        }
+        }*/
         
         return GoMatchDTO(
             id: self.id,
@@ -50,7 +51,8 @@ extension GoMatch {
             destination: self.destination,
             groupLength: self.groupLength,
             status: self.status,
-            viewers: viewers)
+            viewers: [],
+            linkId: self.linkId)
     }
 }
 

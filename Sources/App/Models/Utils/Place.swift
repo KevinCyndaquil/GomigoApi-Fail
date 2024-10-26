@@ -51,8 +51,11 @@ extension Place {
         let dLat = coorRad2[0] - coorRad1[0]
         let dLon = coorRad2[1] - coorRad1[1]
         
-        let a = pow(sin(dLat / 2), 2) + cos(coorRad1[0]) * cos(<#T##Double#>)
+        let a = pow(sin(dLat / 2), 2) + cos(coorRad1[0]) * cos(coorRad2[0]) * pow(sin(dLon / 2), 2)
+        let c = 2 * atan2(sqrt(a), sqrt(1 - a))
         
-        return 0;
+        let earthRadius: Double = 6371000
+        
+        return earthRadius * c;
     }
 }

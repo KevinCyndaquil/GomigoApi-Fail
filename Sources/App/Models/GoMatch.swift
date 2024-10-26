@@ -11,7 +11,7 @@ import Fluent
 import Ch3
 
 final class GoMatch: Model, @unchecked Sendable, Content {
-    static let schema: String = "matchs"
+    static let schema: String = Documents.match.rawValue
     
     @ID(key: .id)
     var id: UUID?
@@ -37,6 +37,12 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     @Field(key: "viewers")
     var viewers: [MongoRef] //GoUser
     
+    @Field(key: "link_id")
+    var linkId: UUID?
+    
+    @Field(key: "linked_users")
+    var linkedUsers: Int
+    
     init() { }
     
     init(id: UUID? = nil,
@@ -46,7 +52,8 @@ final class GoMatch: Model, @unchecked Sendable, Content {
          travel: GoTravel? = nil,
          groupLength: Int,
          status: Status,
-         viewers: [MongoRef]){
+         viewers: [MongoRef],
+         linkId: UUID? = nil){
         self.id = id
         self.poster = poster
         self.currentUbication = currentUbication
@@ -55,13 +62,17 @@ final class GoMatch: Model, @unchecked Sendable, Content {
         self.groupLength = groupLength
         self.status = status
         self.viewers = viewers
+        self.linkId = linkId
     }
     
-    enum Status: String, Content {
-        case processing
-        case matched
-        case waiting
-        case not_matched
+    enum Status: Int, Content {
+        case finished = 0
+        case finished_by_other = 1
+        case processing = 2
+        case waiting = 3
+        case not_matched = 4
+        case matched = 5
+        case linked = 6
     }
 }
 
