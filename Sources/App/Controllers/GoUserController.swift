@@ -36,7 +36,7 @@ struct GoUserController: RouteCollection {
     func localize(req: Request) async throws -> GoUserDTO {
         let localizer = try req.content.decode(GoUserUbication.self)
         
-        guard var user = try await GoUser.query(on: req.db)
+        guard let user = try await GoUser.query(on: req.db)
             .filter(\.$id == localizer.id)
             .first() else {
             throw Abort(.badRequest, reason: "Usuario invalido")

@@ -37,101 +37,6 @@ struct GoMatchController: RouteCollection {
         }
         
         return try await match.toDTO(db: req.db)
-        /*let availableSpaces = match.groupLength - 1
-        
-        try await match.save(on: req.db)
-        guard let matchDTO = try? await match.toDTO(db: req.db) else {
-            throw Abort(.badRequest, reason: "references could not be saved before")
-        }
-        
-        // estoy deberia hacerlo de forma asincrona
-        Task {
-            let linkedMatches: [GoMatch] = try await checkLinked(mongodb: mongodb, db: req.db, match: match)
-            
-            // Here, we filter for each basic property
-            guard var usersMatching: [GoMatch] = try? await GoMatch.query(on: req.db)
-                .sort(\.$status, .ascending)
-                .group(.or, { group in
-                    group
-                        .filter(\.$status == GoMatch.Status.processing)
-                        .filter(\.$status == GoMatch.Status.waiting)
-                })
-                .filter(\.$id != match.id ?? UUID())
-                .filter(\.$groupLength == match.groupLength)
-                .all() else {
-                    throw Abort(.internalServerError, reason: "error al buscar todos los usuarios intentando hacer matching")
-                }
-            
-            print("estan estos para comenzar " + String(usersMatching.count))
-            
-            // Here, we filter for destination distance
-            usersMatching = usersMatching.filter {
-                $0.destination.distance(to: match.destination) <= 20
-            }
-            
-            usersMatching = linkedMatches + usersMatching
-        
-            for user in usersMatching {
-                print(user.id?.uuidString ?? "nil")
-            }
-            
-            print("estan estos para hacer match " + String(usersMatching.count))
-            
-            // Here, we get all current ubication nearby of us
-            let matchedUsers = match.nearest(from: usersMatching)
-            
-            // Here, we can improve the sleep process, probably no needed
-            try await Task.sleep(nanoseconds: 20_000_000_000)
-            
-            if (matchedUsers.count < availableSpaces) {
-                let asyncMatch = try await GoMatch.query(on: req.db)
-                    .filter(\.$id == match.id ?? UUID())
-                    .filter(\.$status == .processing)
-                    .first()
-                
-                if asyncMatch != nil {
-                    match.status = .waiting
-                    print("se cambio el estatus del match a waiting")
-                }
-
-            } else {
-                var upUUID: Set<UUID> = [ match.id! ]
-                //var updatingUUID: [String] = [ match.id?.uuidString ?? "nil" ]
-                
-                for i in 0..<availableSpaces {
-                    upUUID.insert(usersMatching[i].id!)
-                    //updatingUUID.append(usersMatching[i].id?.uuidString ?? "nil")
-                    print(usersMatching[i].id?.uuidString ?? "nil")
-                }
-                
-                // Here, we generate a unique UUID to link the matched users
-                let linkId = UUID()
-                // Only check if any user did not cancel his match
-                let anyCanceled: Set<UUID> = Set(try await GoMatch.query(on: req.db)
-                    .filter(\.$status == .finished)
-                    .all()
-                    .map {
-                        $0.id!
-                    })
-                upUUID = upUUID.subtracting(anyCanceled)
-                
-                let filter: Document = [
-                    "_id": [ "$in": upUUID.map { $0.uuidString } ]
-                ]
-                var update: Document = [:]
-                update["status"] = GoMatch.Status.linked.rawValue
-                update["link_id"] = linkId.uuidString
-                
-                let result = try await mongodb[Documents.match.rawValue]
-                    .updateMany(where: filter, to: ["$set": update]).get()
-                
-                print("resultados " + String(result.updatedCount))
-                
-                return;
-            }
-            
-            try await match.update(on: req.db)
-        }*/
     }
     
     @Sendable
@@ -182,6 +87,8 @@ struct GoMatchController: RouteCollection {
             throw Abort(.badRequest, reason: "match id es invalida")
         }
         
+        print("hola")
+        
         guard let match = try? await GoMatch.query(on: req.db)
             .filter(\.$id == matchable.matchId!)
             .group(.and, { $0
@@ -200,10 +107,12 @@ struct GoMatchController: RouteCollection {
         let mongodb = try MongoController.client(db: req.db)
         let matchService = GoMatchService(mongodb: mongodb, db: req.db)
         
-        guard let match = try? await matchService.add(from: match, member: user) else {
+        let updatedMatch = try await matchService.add(from: match, member: user)
+        
+        /*guard let match = try? await matchService.add(from: match, member: user) else {
             throw Abort(.internalServerError, reason: "ocurrió un error haciendo un link de usuarios")
-        }
-        return try await match.toDTO(db: req.db)
+        }*/
+        return try await updatedMatch.toDTO(db: req.db)
     }
     
     @Sendable

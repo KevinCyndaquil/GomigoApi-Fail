@@ -37,7 +37,7 @@ struct GoMatchService {
     }
     
     func filter(match req: GoUserMatchable) async throws -> [GoMatch] {
-        guard let user = try? await GoUser.query(on: db)
+        guard let _ = try? await GoUser.query(on: db)
             .filter(\.$id == req.user.id)
             .first() else {
             throw Abort(.badRequest, reason: "Usuario invalido")
@@ -80,7 +80,23 @@ struct GoMatchService {
     }
     
     func add(from match: GoMatch, member: GoUser) async throws -> GoMatch {
-        match.members.insert(GoMember(from: member))
+        if match.status == .canceled || match.status == .finalized {
+            throw Abort(.badRequest, reason: "Intentas agregar integrantes de un match ya finalizado")
+        }
+        
+        if match.groupLength == match.members.count + 1 {
+            throw Abort(.badRequest, reason: "el grupo ya está completo")
+        }
+        
+        if match.leader.id == member.id! {
+            throw Abort(.badRequest, reason: "el usuario que quieres agregar es ya el lider del grupo")
+        }
+        
+        let (inserted, _) = match.members.insert(GoMember(from: member))
+        if inserted {
+            throw Abort(.badRequest, reason: "el usuario que quieres agregar ya se encontraba en tu equipo")
+        }
+        
         match.requirements = match.requirements!.intersection(with: member.preferences)
         
         try await match.update(on: db)
@@ -88,10 +104,22 @@ struct GoMatchService {
     }
     
     func kick(from match: GoMatch, member: GoUser) async throws -> GoMatch {
-        if match.leader.id == member.id && !match.members.isEmpty {
+        if match.status == .canceled || match.status == .finalized {
+            throw Abort(.badRequest, reason: "Intentas quitar integrantes de un match ya finalizado")
+        }
+        
+        if match.leader.id == member.id && match.members.isEmpty {
+            match.status = .canceled
+            try await match.update(on: db)
+            return match
+        }
+        if match.leader.id == member.id {
             match.leader = match.members.removeFirst().user
+            print("sacando al lider")
         } else {
-            match.members.remove(GoMember(from: member))
+            if match.members.remove(GoMember(from: member)) == nil {
+                throw Abort(.badRequest, reason: "removiendo usuario que no es integrante del grupo")
+            }
         }
         
         guard let leader = try? await userService.select(id: match.leader.id) else {

@@ -66,7 +66,6 @@ extension GoMatch {
     
     static func nearest(from request: GoUserMatchable, to users: [GoUser]) -> Bool {
         let currentH3Index = request.currentUbication.toH3Index()
-        //let minDistance = Int32.max
         
         var places = users.map {
             $0.currentUbication!
@@ -87,31 +86,6 @@ extension GoMatch {
         print("current h3 distance ", distance)
         
         return distance <= 5
-    }
-    
-    func nearest(from matches: [GoMatch]) -> [GoMatch] {
-        /*let currentH3Index = currentUbication.toH3Index()
-        var nearestMatches: [GoMatch] = []
-        var minDistance = Int32.max
-        
-        for match in matches {
-            let h3Index = match.currentUbication.toH3Index()
-            let distance = h3Distance(currentH3Index.value, h3Index.value)
-            
-            if (distance == minDistance) {
-                nearestMatches.append(match)
-            }
-            
-            print("current distance " + String(distance))
-                
-            if distance >= 0 && distance < minDistance {
-                minDistance = distance
-                nearestMatches = [match]
-            }
-        }
-        
-        return nearestMatches*/
-        return []
     }
 }
 

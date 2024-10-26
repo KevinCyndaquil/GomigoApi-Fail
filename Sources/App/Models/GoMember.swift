@@ -14,15 +14,16 @@ final class GoMember: Fields, @unchecked Sendable, Content {
     var user: MongoRef
     
     @Field(key: "response")
-    var response: GoResponse?
+    var response: String?
     
     init() { }
     
     init(from user: GoUser) {
         self.user = MongoRef(id: user.id!)
+        self.response = nil
     }
     
-    init(user: MongoRef, response: GoResponse? = nil) {
+    init(user: MongoRef, response: String? = nil) {
         self.user = user
         self.response = response
     }
