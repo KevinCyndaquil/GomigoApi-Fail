@@ -48,7 +48,7 @@ final class GoUser: Model, @unchecked Sendable, Content {
     var contact: GoContact
     
     @Field(key: "current_ubication")
-    var currentUbication: Place
+    var currentUbication: Place?
     
     @Field(key: "online")
     var online: Bool
@@ -61,29 +61,30 @@ final class GoUser: Model, @unchecked Sendable, Content {
     
     init() { }
     
-    init(id: UUID? = nil, nickname: String, password: String, icon: Data? = nil, score: Float, description: String, files: GoFilesId, properties: GoPersonalProperties, preferences: GoPreferences, contact: GoContact, friends: [MongoRef], currentUbication: Place, online: Bool, matching: Bool, travels: [MongoRef]) {
+    init(id: UUID? = nil, nickname: String, password: String, icon: Data? = nil, properties: GoPersonalProperties, files: GoFilesId, travels: [MongoRef], preferences: GoPreferences, stadistics: GoStadistics, score: Float, description: String, contact: GoContact, currentUbication: Place? = nil, online: Bool, matching: Bool, friends: [MongoRef]) {
         self.id = id
         self.nickname = nickname
         self.password = password
         self.icon = icon
+        self.properties = properties
+        self.files = files
+        self.travels = travels
+        self.preferences = preferences
+        self.stadistics = stadistics
         self.score = score
         self.description = description
-        self.files = files
-        self.properties = properties
-        self.preferences = preferences
         self.contact = contact
-        self.friends = friends
         self.currentUbication = currentUbication
         self.online = online
         self.matching = matching
-        self.travels = travels
+        self.friends = friends
     }
 }
 
 extension GoUser {
     
     func match(with user: GoUser) -> Bool {
-        var userAgeRange = AgeRange.range(birthday: user.properties.birthday)!
+        let userAgeRange = AgeRange.range(birthday: user.properties.birthday)!
         
         var wasMatch = preferences.matchingGender
                 .contains(user.properties.gender) &&

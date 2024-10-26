@@ -16,9 +16,6 @@ final class GoPersonalProperties: Fields, @unchecked Sendable {
     @Field(key: "lastname")
     var lastname: String
     
-    @Field(key: "sex")
-    var sex: String
-    
     @Field(key: "gender")
     var gender: Gender
     
@@ -27,9 +24,6 @@ final class GoPersonalProperties: Fields, @unchecked Sendable {
     
     @Field(key: "birthday")
     var birthday: Date
-    
-    @Field(key: "age")
-    var age: Int
     
     @Field(key: "emergency_contact")
     var emergencyContact: [GoContact]

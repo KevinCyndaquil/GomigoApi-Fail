@@ -14,6 +14,7 @@ struct GoUserController: RouteCollection {
         
         userRoute.get(use: self.index)
         userRoute.post(use: self.register)
+        userRoute.put("localize", use: self.localize)
     }
     
     @Sendable
@@ -30,5 +31,18 @@ struct GoUserController: RouteCollection {
         try await goUser.save(on: req.db)
         return goUser
     }
-
+    
+    @Sendable
+    func localize(req: Request) async throws -> GoUserDTO {
+        let localizer = try req.content.decode(GoUserUbication.self)
+        
+        guard var user = try await GoUser.query(on: req.db)
+            .filter(\.$id == localizer.id)
+            .first() else {
+            throw Abort(.badRequest, reason: "Usuario invalido")
+        }
+        user.currentUbication = localizer.currentUbication
+        try await user.update(on: req.db)
+        return user.toDTO()
+    }
 }

@@ -36,7 +36,7 @@ final class GoTravel: Model, @unchecked Sendable, Content {
     @Field(key: "transport_service")
     var transport_service: TransportServices?
     
-    @Field(key: "status")
-    var status: TravelStatus
+    //@Field(key: "status")
+    //var status: TravelStatus
     
 }

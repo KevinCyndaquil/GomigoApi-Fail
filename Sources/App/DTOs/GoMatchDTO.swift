@@ -23,6 +23,7 @@ extension GoMatchDTO {
     func toModel() -> GoMatch {
         GoMatch(
             id: self.id,
+            leader: MongoRef(id: self.leader.id!),
             members: Set(self.members.map {
                 GoMember(user: MongoRef(id: $0.id!))
             }),
@@ -41,7 +42,7 @@ extension GoMatch {
     func toDTO(db: any Database) async throws -> GoMatchDTO {
         let userService = UserService(database: db)
         
-        guard let leader = try? await userService.select(id: self.leader!.id) else {
+        guard let leader = try? await userService.select(id: self.leader.id) else {
             throw Abort(.badRequest, reason: "leader no pudo ser encontrado")
         }
         
@@ -53,7 +54,7 @@ extension GoMatch {
             members.append(savedMember.toDTO())
         }
         
-        var requests: [GoUserDTO] = []
+        let requests: [GoUserDTO] = []
         for r in self.requests {
             guard let savedRequest = try? await userService.select(id: r.id) else {
                 throw Abort(.badGateway, reason: "member no pudo ser encontrado")
@@ -74,23 +75,29 @@ extension GoMatch {
 }
 
 struct GoUserMatchable: Content {
-    var id: UUID
+    var matchId: UUID?
+    var user: MongoRef
     var currentUbication: Place
     var destination: Place
     var groupLength: Int
 }
 
+struct GoMatchFinalized: Content {
+    var user: MongoRef
+    var match: MongoRef
+}
+
 struct GoMatchPost: Content {
     var leader: GoUserMatchable
-    var groupLength: Int
     var transport: TransportServices
 }
 
 extension GoMatchPost {
     func toModel() -> GoMatch {
         GoMatch(
+            leader: MongoRef(id: leader.user.id),
             members: [],
-            groupLength: self.groupLength,
+            groupLength: self.leader.groupLength,
             destination: self.leader.destination,
             transport: self.transport,
             status: .processing,

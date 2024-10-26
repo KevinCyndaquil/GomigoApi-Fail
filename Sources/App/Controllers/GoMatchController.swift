@@ -16,46 +16,9 @@ struct GoMatchController: RouteCollection {
         
         matchRouter.post("begin", use: self.begin)
         matchRouter.post("look", use: self.look)
-        matchRouter.post("cancel", use: self.cancel)
-    }
-    
-    func checkLinked(mongodb: MongoDatabase, db: any Database, match: GoMatch) async throws -> [GoMatch] {
-        let aggregationGroup: Document = [
-            "_id": "$link_id",
-            "count": ["$sum": 1],
-            "group_length": ["$first": "$group_length"]
-        ]
-        
-        let aggregationPipeline: [AggregateBuilderStage] = [
-            .match(["_id": ["$ne": match.id!.uuidString]]),
-            .init(document: ["$group": aggregationGroup]),
-            .match(["$expr": ["$lt": ["$count", "$group_length"]]]),
-            .sort(["count": .descending]),
-        ]
-        
-        let results = try await mongodb[GoMatch.schema]
-            .aggregate(aggregationPipeline).execute().get()
-        
-        var linkedMatches: [GoMatch] = []
-        for try await doc in results {
-            guard let linkStringId = doc["_id"] as? String else {
-                throw Abort(.internalServerError, reason: "ocurrio un error obteniendo el link id de los matches")
-            }
-            let linkId = UUID(uuidString: linkStringId)
-            
-            guard let linked = try? await GoMatch.query(on: db)
-                .filter(\.$linkId == linkId)
-                .all() else {
-                throw Abort(.internalServerError, reason: "ocurrio un error obteniendos los matches ligados a link id")
-            }
-            linkedMatches.append(contentsOf: linked)
-            
-            for l in linked {
-                print(l.id ?? "nil", " ", l.linkId ?? "nil")
-            }
-        }
-        
-        return linkedMatches
+        matchRouter.post("link", use: self.link)
+        matchRouter.put("unlink", use: self.unlink)
+        matchRouter.post("filter", use: self.filter)
     }
     
     /// This  resource starts the matching process, doing this:
@@ -63,16 +26,18 @@ struct GoMatchController: RouteCollection {
     /// * Returns a ok response with the UUID generated,
     ///   and starts the matching process.
     /// * Gets all matches, filtering by each property needed.
-    /// *
     @Sendable
     func begin(req: Request) async throws -> GoMatchDTO {
-        guard let database: MongoDatabaseRepresentable = req.db as? MongoDatabaseRepresentable else {
-            throw Abort(.internalServerError)
-        }
-        let mongodb = database.raw
+        let mongodb = try MongoController.client(db: req.db)
+        let matchService = GoMatchService(mongodb: mongodb, db: req.db)
         
-        let match = try req.content.decode(GoMatchPost.self).toModel()
-        let availableSpaces = match.groupLength - 1
+        let matchPost = try req.content.decode(GoMatchPost.self)
+        guard let match = try? await matchService.generate(with: matchPost) else {
+            throw Abort(.badRequest, reason: "no se pudo generar el match")
+        }
+        
+        return try await match.toDTO(db: req.db)
+        /*let availableSpaces = match.groupLength - 1
         
         try await match.save(on: req.db)
         guard let matchDTO = try? await match.toDTO(db: req.db) else {
@@ -166,9 +131,7 @@ struct GoMatchController: RouteCollection {
             }
             
             try await match.update(on: req.db)
-        }
-        
-        return matchDTO
+        }*/
     }
     
     @Sendable
@@ -183,53 +146,93 @@ struct GoMatchController: RouteCollection {
             throw Abort(.notFound, reason: "id de match no encontrado")
         }
         
-        if match.status != .linked {
-            if match.status == .finished {
-                throw Abort(.badRequest, reason: "al parecer, el match ya ha sido finalizado")
-            }
-            if match.status == .finished_by_other {
-                throw Abort(.accepted, reason: "al parecer, un usuario con el que habias hecho match ya ha cancelado tu match")
-            }
-            if match.status == .processing {
-                throw Abort(.found, reason: "seguimos procesando el match")
-            }
-            if match.status == .not_matched {
-                throw Abort(.unprocessableEntity, reason: "no pudimos encontrar un match")
-            }
-            if match.status == .matched {
-                return try await match.toDTO(db: req.db)
-            }
-            throw Abort(.internalServerError, reason: "no se procesa el estatus del match")
+        switch match.status {
+        case .processing, .matched:
+            return try await match.toDTO(db: req.db);
+        case .canceled:
+            throw Abort(.badRequest, reason: "El match ha sido cancelado por el lider del grupo")
+        case .finalized:
+            throw Abort(.ok, reason: "El match ya ha finalizado correctamente")
         }
-        
-        guard let linkedMatches = try? await GoMatch.query(on: req.db)
-            .filter(\.$linkId == match.linkId)
-            .all() else {
-            throw Abort(.notFound, reason: "link id de match no encontro los matches")
-        }
-        
-        return try await match.toDTO(db: req.db)
     }
     
     @Sendable
-    func cancel(req: Request) async throws -> Response {
-        guard let matchRef: MongoRef = try? req.content.decode(MongoRef.self) else {
+    func filter(req: Request) async throws -> [GoMatchDTO] {
+        guard let matchable = try? req.content.decode(GoUserMatchable.self) else {
+            throw Abort(.badRequest, reason: "Objeto invalido")
+        }
+        let mongodb = try MongoController.client(db: req.db)
+        let matchService = GoMatchService(mongodb: mongodb, db: req.db)
+        
+        guard let matches = try? await matchService.filter(match: matchable) else {
+            throw Abort(.badRequest, reason: "No se pudo realizar un filter")
+        }
+        var matchesDTO: [GoMatchDTO] = []
+        for match in matches {
+            let dto = try await match.toDTO(db: req.db)
+            matchesDTO.append(dto)
+        }
+        
+        return matchesDTO
+    }
+    
+    @Sendable
+    func link(req: Request) async throws -> GoMatchDTO {
+        guard let matchable = try? req.content.decode(GoUserMatchable.self) else {
             throw Abort(.badRequest, reason: "match id es invalida")
         }
         
         guard let match = try? await GoMatch.query(on: req.db)
-            .filter(\.$id == matchRef.id)
+            .filter(\.$id == matchable.matchId!)
+            .group(.and, { $0
+                .filter(\.$status != .finalized)
+                .filter(\.$status != .canceled)
+            })
             .first() else {
-            throw Abort(.notFound, reason: "id de match no encontrado")
+            throw Abort(.badRequest, reason: "id de match no encontrado")
+        }
+        guard let user = try? await GoUser.query(on: req.db)
+            .filter(\.$id == matchable.user.id)
+            .first() else {
+            throw Abort(.badRequest, reason: "id de usuario no encontrada")
         }
         
-        if (match.status == .finished || match.status == .finished_by_other){
+        let mongodb = try MongoController.client(db: req.db)
+        let matchService = GoMatchService(mongodb: mongodb, db: req.db)
+        
+        guard let match = try? await matchService.add(from: match, member: user) else {
+            throw Abort(.internalServerError, reason: "ocurrió un error haciendo un link de usuarios")
+        }
+        return try await match.toDTO(db: req.db)
+    }
+    
+    @Sendable
+    func unlink(req: Request) async throws -> Response {
+        guard let matchFinalized = try? req.content.decode(GoMatchFinalized.self) else {
+            throw Abort(.badRequest, reason: "match id es invalida")
+        }
+        
+        guard let match = try? await GoMatch.query(on: req.db)
+            .filter(\.$id == matchFinalized.match.id)
+            .first() else {
+            throw Abort(.badRequest, reason: "id de match no encontrado")
+        }
+        guard let user = try? await GoUser.query(on: req.db)
+            .filter(\.$id == matchFinalized.user.id)
+            .first() else {
+            throw Abort(.badRequest, reason: "id de usuario no encontrada")
+        }
+        
+        if (match.status == .finalized || match.status == .canceled){
             return Response(status: .ok, body: "Match ya había sido finalizado")
         }
         
-        match.status = .finished
-        match.linkId = nil
-        try await match.update(on: req.db)
+        let mongodb = try MongoController.client(db: req.db)
+        let matchService = GoMatchService(mongodb: mongodb, db: req.db)
+        
+        let _ = try await matchService.kick(from: match, member: user)
+        
+        return Response(status: .ok, body: "El grupo ha sido disuelto correctamente")
         
         /*if match.linkId != nil {
             guard let linkedMatches = try? await GoMatch.query(on: req.db)
@@ -242,7 +245,5 @@ struct GoMatchController: RouteCollection {
                 try await linkedMatch.update(on: req.db)
             }
         }*/
-        
-        return Response(status: .ok, body: "Match finalizado correctamente")
     }
 }

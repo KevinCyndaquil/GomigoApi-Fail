@@ -23,56 +23,78 @@ struct GoMatchService {
     }
     
     func generate(with unsaved: GoMatchPost) async throws -> GoMatch {
-        var match = unsaved.toModel()
+        guard let leader = try? await userService.select(id: unsaved.leader.user.id) else {
+            throw Abort(.badRequest, reason: "leader id no valida")
+        }
+        leader.matching = true
+        let match = unsaved.toModel()
+        match.requirements = leader.preferences
         
+        try await leader.update(on: db)
         try await match.save(on: db)
         
         return match
     }
     
     func filter(match req: GoUserMatchable) async throws -> [GoMatch] {
+        guard let user = try? await GoUser.query(on: db)
+            .filter(\.$id == req.user.id)
+            .first() else {
+            throw Abort(.badRequest, reason: "Usuario invalido")
+        }
         guard var matches = try? await GoMatch.query(on: db)
             .sort(\.$status, .ascending)
-            .group(.or, { $0
-                .filter(\.$status == .processing)
-                .filter(\.$status == .waiting)
-            })
-            .filter(\.$id != req.id)
+            .filter(\.$status == .processing)
             .filter(\.$groupLength == req.groupLength)
             .all() else {
             throw Abort(.internalServerError, reason: "Error al buscar matches")
         }
         
-        matches = matches.filter {
-            $0.destination.distance(to: req.destination) <= maxDistanceFromCurrent
+        print("Match encontrado ", matches.count)
+        
+        matches = matches
+            .filter ({
+                $0.destination.distance(to: req.destination) <= maxDistanceFromCurrent
+            })
+            //aqui deben ir las preferencias del usuario xd
+        
+        var nearbyMatches: [GoMatch] = []
+        for match in matches {
+            guard let leader = try? await userService.select(id: match.leader.id) else {
+                throw Abort(.badRequest, reason: "No se pudo encontrar a el leader")
+            }
+            
+            var members: [GoUser] = [leader]
+            for member in match.members {
+                guard let user = try? await userService.select(id: member.user.id) else {
+                    throw Abort(.badRequest, reason: "id de miembro invalido")
+                }
+                members.append(user)
+            }
+            
+            if (GoMatch.nearest(from: req, to: members)) {
+                nearbyMatches.append(match)
+            }
         }
-        
-        let nearbyMatches = 
-        
-        return []
+        return nearbyMatches
     }
     
-    func add(from match: GoMatch, member: GoMember) async throws {
-        guard let sMember = try? await userService.select(id: member.user.id) else {
-            throw Abort(.badRequest, reason: "id de member no encontrado")
-        }
+    func add(from match: GoMatch, member: GoUser) async throws -> GoMatch {
+        match.members.insert(GoMember(from: member))
+        match.requirements = match.requirements!.intersection(with: member.preferences)
         
-        if match.leader == nil {
-            match.leader = member.user
-        } else {
-            match.members.insert(member)
-        }
-        match.requirements = match.requirements.intersection(with: sMember.preferences)
+        try await match.update(on: db)
+        return match
     }
     
-    func kick(from match: GoMatch, member: GoMember) async throws {
-        if match.leader == member.user && !match.members.isEmpty {
+    func kick(from match: GoMatch, member: GoUser) async throws -> GoMatch {
+        if match.leader.id == member.id && !match.members.isEmpty {
             match.leader = match.members.removeFirst().user
         } else {
-            match.members.remove(member)
+            match.members.remove(GoMember(from: member))
         }
         
-        guard let leader = try? await userService.select(id: match.leader!.id) else {
+        guard let leader = try? await userService.select(id: match.leader.id) else {
             throw Abort(.badRequest, reason: "id de lider no encontrada")
         }
         var newPreference = leader.preferences
@@ -84,10 +106,13 @@ struct GoMatchService {
             newPreference = newPreference.intersection(with: sMember.preferences)
         }
         match.requirements = newPreference
+        
+        try await match.update(on: db)
+        return match
     }
     
     func checkLinkedMatches(from match: GoMatch) async throws -> [GoMatch] {
-        let aggregationGroup: Document = [
+        /*let aggregationGroup: Document = [
             "_id": "$link_id",
             "count": ["$sum": 1],
             "group_length": ["$first": "$group_length"]
@@ -120,8 +145,8 @@ struct GoMatchService {
             for l in linked {
                 print(l.id ?? "nil", " ", l.linkId ?? "nil")
             }
-        }
+        }*/
         
-        return linkedMatches
+        return []
     }
 }

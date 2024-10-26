@@ -36,11 +36,11 @@ final class GoPreferences: Fields, @unchecked Sendable {
 extension GoPreferences {
 
     func intersection(with groupB: GoPreferences) -> GoPreferences {
-        var matchingGender = self.matchingGender
+        let matchingGender = self.matchingGender
             .intersection(groupB.matchingGender)
-        var ageRange = self.ageRange
+        let ageRange = self.ageRange
             .intersection(groupB.ageRange)
-        var matchForeigns = self.matchForeigns && groupB.matchForeigns
+        let matchForeigns = self.matchForeigns && groupB.matchForeigns
         
         return GoPreferences(
             matchingGender: matchingGender,

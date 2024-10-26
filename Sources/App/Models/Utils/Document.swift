@@ -15,10 +15,6 @@ final class MongoRef: Fields, @unchecked Sendable, Content {
     
     init() { }
     
-    init(from model: any Model) throws {
-        self.id = model.id as! UUID
-    }
-    
     init(id: UUID) {
         self.id = id
     }

@@ -1,40 +1,66 @@
-{
-    "nickname": "kevincyn",
-    "password": "oa",
-    "preferences": {
-        "matchWithSex": [],
-        "matchWithGender": [],
-        "matchAge": ["childhood", "elder"],
-        "emergencyContact": [],
-        "matchForeigns": false,
-        "matchOtherNationalities": true
+[
+    {
+        "nickname": "kevincyn",
+        "password": "xd",
+        "files": {
+            "curp": "kafg"
+        },
+        "properties": {
+            "name": "kevin alejandro",
+            "lastname": "francisco gonzalez",
+            "gender": "male",
+            "nationality": "mexicano",
+            "birthday": "2003-05-18T00:00:00Z",
+            "age": 21,
+            "emergencyContact": []
+        },
+        "contact": {
+            "phoneNumber": "962 185",
+            "emailAddress": "kevin@unach.mx",
+            "facebook": "http:/facebooj.com/kevin"
+        }
     },
-    "score": 0,
-    "description": "hola",
-    "files": {
-        "curp": "kafg"
+    {
+        "nickname": "Chus",
+        "password": "xd12345",
+        "files": {
+            "curp": "3456gfd"
+        },
+        "properties": {
+            "name": "Jesus Eduardo",
+            "lastname": "Ortega Armenta",
+            "gender": "female",
+            "nationality": "Haitiano",
+            "birthday": "2004-03-24T00:00:00Z",
+            "age": 20,
+            "emergencyContact": []
+        },
+        "contact": {
+            "phoneNumber": "962 185 222 22",
+            "emailAddress": "chus@unach.mx",
+            "facebook": "http:/faceboog.com/kevin"
+        }
     },
-    "properties": {
-        "name": "kevin alejandro",
-        "lastname": "francisco gonzalez",
-        "sex": "male",
-        "gender": "male",
-        "nationality": "mexicano",
-        "birthday": "2003-05-18T00:00:00Z",
-        "age": 21
-    },
-    "contact": {
-        "phoneNumber": "962 185",
-        "emailAddress": "kevin@unach.mx",
-        "facebook": "http:/facebooj.com/kevin"
-    },
-    "stadistics": {
-        "walkedKilometers": 100.0,
-        "visitedCities": 1,
-        "archivements": []
-    },
-    "friends": [
-
-    ]
-}
+    {
+        "nickname": "albertox",
+        "password": "maidanauwu02",
+        "files": {
+            "curp": "paaa34343434"
+        },
+        "properties": {
+            "name": "Alberto Rafael",
+            "lastname": "Palomeque Avendano",
+            "gender": "male",
+            "nationality": "mexicano",
+            "birthday": "2004-10-02T00:00:00Z",
+            "age": 20,
+            "emergencyContact": []
+        },
+        "contact": {
+            "phoneNumber": "962 150",
+            "emailAddress": "alberto@unach.mx",
+            "facebook": "http:/facebooj.com/alberto1"
+        }
+    }
+]
 

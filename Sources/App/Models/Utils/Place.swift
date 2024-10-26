@@ -44,7 +44,7 @@ extension Place {
         let b = coor.longitude * .pi / 180
         let x = cos(a) * cos(b)
         let y = cos(a) * sin(b)
-        let z = sin(b)
+        let z = sin(a)
         return (x, y, z)
     }
     

@@ -15,22 +15,7 @@ struct GoUserDTO: Content {
     var icon: Data?
     var score: Float
     var description: String
-    //var files: GoFilesId //
-    //var properties: GoPersonalProperties //
-    //var preferences: GoPreferences
-    //var contact: GoContact
-    //var friends: [GoUserDTO]
 }
-
-/*extension GoUserDTO {
-    func toModel() -> GoUser {
-        GoUser(id: self.id,
-               nickname: self.nickname,
-               password: self.password,
-               score: self.score,
-               description: self.description)
-    }
-}*/
 
 extension GoUser {
     func toDTO() -> GoUserDTO {
@@ -56,12 +41,22 @@ extension GoUserPost {
         GoUser(
             nickname: self.nickname,
             password: self.password,
-            score: 0,
-            description: "sin descripcion",
-            files: self.files,
             properties: self.properties,
-            preferences: GoPreferences.def_preference,
+            files: self.files,
+            travels: [],
+            preferences: GoPreferences.common,
+            stadistics: GoStadistics.zero,
+            score: 0,
+            description: "nada aqui",
             contact: self.contact,
-            friends: [])
+            online: false,
+            matching: false,
+            friends: []
+        )
     }
+}
+
+struct GoUserUbication: Content {
+    var id: UUID
+    var currentUbication: Place
 }
