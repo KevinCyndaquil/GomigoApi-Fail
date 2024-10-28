@@ -14,9 +14,8 @@ struct MongoController {
     
     static func client(db: any Database) throws -> MongoDatabase {
         guard let database: MongoDatabaseRepresentable = db as? MongoDatabaseRepresentable else {
-            throw Abort(.internalServerError)
+            throw Abort(.internalServerError, reason: "no se pudo crear el objeto mongodb")
         }
-        
         return database.raw
     }
 }

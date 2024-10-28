@@ -16,17 +16,26 @@ struct GoMatchService {
     let db: any Database
     let userService: UserService
     
-    init(mongodb: MongoDatabase, db: any Database) {
-        self.mongodb = mongodb
-        self.db = db
-        self.userService = UserService(database: db)
+    init(database: any Database) throws {
+        self.mongodb = try MongoController.client(db: database)
+        self.db = database
+        self.userService = try UserService(database: database)
+    }
+    
+    func select(id: UUID) async throws -> GoMatch {
+        guard let match = try? await GoMatch.query(on: db)
+            .filter(\.$id == id)
+            .first() else {
+            throw Abort(.badRequest, reason: "id de match no encontrado")
+        }
+        return match
     }
     
     func generate(with unsaved: GoMatchPost) async throws -> GoMatch {
-        guard let leader = try? await userService.select(id: unsaved.leader.user.id) else {
-            throw Abort(.badRequest, reason: "leader id no valida")
-        }
+        let leader = try await userService.select(id: unsaved.leader.user.id)
         leader.matching = true
+        leader.currentUbication = unsaved.leader.currentUbication
+        
         let match = unsaved.toModel()
         match.requirements = leader.preferences
         
@@ -37,11 +46,8 @@ struct GoMatchService {
     }
     
     func filter(match req: GoUserMatchable) async throws -> [GoMatch] {
-        guard let _ = try? await GoUser.query(on: db)
-            .filter(\.$id == req.user.id)
-            .first() else {
-            throw Abort(.badRequest, reason: "Usuario invalido")
-        }
+        let _ = try await userService.select(id: req.user.id)
+        
         guard var matches = try? await GoMatch.query(on: db)
             .sort(\.$status, .ascending)
             .filter(\.$status == .processing)
@@ -60,15 +66,11 @@ struct GoMatchService {
         
         var nearbyMatches: [GoMatch] = []
         for match in matches {
-            guard let leader = try? await userService.select(id: match.leader.id) else {
-                throw Abort(.badRequest, reason: "No se pudo encontrar a el leader")
-            }
+            let leader = try await userService.select(id: match.leader.id)
             
             var members: [GoUser] = [leader]
             for member in match.members {
-                guard let user = try? await userService.select(id: member.user.id) else {
-                    throw Abort(.badRequest, reason: "id de miembro invalido")
-                }
+                let user = try await userService.select(id: member.user.id)
                 members.append(user)
             }
             
@@ -79,14 +81,58 @@ struct GoMatchService {
         return nearbyMatches
     }
     
-    func add(from match: GoMatch, member: GoUser) async throws -> GoMatch {
-        if match.status == .canceled || match.status == .finalized {
-            throw Abort(.badRequest, reason: "Intentas agregar integrantes de un match ya finalizado")
+    func add(from match: GoMatch, requester: GoUser) async throws -> GoMatch {
+        try match.mustActive()
+        
+        let (inserted, _) = match.requests.insert(MongoRef(id: requester.id!))
+        if !inserted {
+            throw Abort(.badRequest, reason: "Usuario ya ha pedido unirse al grupo")
         }
         
-        if match.groupLength == match.members.count + 1 {
-            throw Abort(.badRequest, reason: "el grupo ya está completo")
+        try await match.update(on: db)
+        return match
+    }
+    
+    func accept(leader: MongoRef, from match: GoMatch, newMember: GoUser) async throws -> GoMatch {
+        try match.mustActive()
+        
+        if (match.leader != leader) {
+            throw Abort(.badRequest, reason: "Solo el alfitrion del grupo puede aceptar peticiones de otros usuarios")
         }
+        
+        let requesterRef = MongoRef(id: newMember.id!)
+        if match.requests.remove(requesterRef) == nil {
+            throw Abort(.badRequest, reason: "Intentas aceptar una peticion de un usuario que no ha hecho ninguna request")
+        }
+            
+        match.members.insert(GoMember(from: newMember))
+        if match.members.count + 1 == match.groupLength {
+            match.status = .matched
+        }
+        
+        try await match.update(on: db)
+        return match
+    }
+    
+    func decline(leader: MongoRef?, from match: GoMatch, requester: GoUser) async throws -> GoMatch {
+        try match.mustActive()
+        let requesterRef = MongoRef(id: requester.id!)
+        
+        if (match.leader != leader || !match.requests.contains(requesterRef)) {
+            throw Abort(.badRequest, reason: "Solo el alfitrion del grupo o quien realizo el request puede declinar una petición")
+        }
+        
+        if match.requests.remove(requesterRef) == nil {
+            throw Abort(.badRequest, reason: "Intentas declinar una peticion de un usuario que no ha hecho ninguna request")
+        }
+        
+        try await match.update(on: db)
+        return match
+    }
+    
+    /*
+    func add(from match: GoMatch, member: GoUser) async throws -> GoMatch {
+        try match.mustActive()
         
         if match.leader.id == member.id! {
             throw Abort(.badRequest, reason: "el usuario que quieres agregar es ya el lider del grupo")
@@ -122,59 +168,16 @@ struct GoMatchService {
             }
         }
         
-        guard let leader = try? await userService.select(id: match.leader.id) else {
-            throw Abort(.badRequest, reason: "id de lider no encontrada")
-        }
+        let leader = try await userService.select(id: match.leader.id)
         var newPreference = leader.preferences
         
         for member in match.members {
-            guard let sMember = try? await userService.select(id: member.user.id) else {
-                throw Abort(.badRequest, reason: "id de miembro no encontrado")
-            }
-            newPreference = newPreference.intersection(with: sMember.preferences)
+            let savedMember = try await userService.select(id: member.user.id)
+            newPreference = newPreference.intersection(with: savedMember.preferences)
         }
         match.requirements = newPreference
         
         try await match.update(on: db)
         return match
-    }
-    
-    func checkLinkedMatches(from match: GoMatch) async throws -> [GoMatch] {
-        /*let aggregationGroup: Document = [
-            "_id": "$link_id",
-            "count": ["$sum": 1],
-            "group_length": ["$first": "$group_length"]
-        ]
-        
-        let aggregationPipeline: [AggregateBuilderStage] = [
-            .match(["_id": ["$ne": match.id!.uuidString]]),
-            .init(document: ["$group": aggregationGroup]),
-            .match(["$expr": ["$lt": ["$count", "$group_length"]]]),
-            .sort(["count": .descending]),
-        ]
-        
-        let results = try await mongodb[GoMatch.schema]
-            .aggregate(aggregationPipeline).execute().get()
-        
-        var linkedMatches: [GoMatch] = []
-        for try await doc in results {
-            guard let linkStringId = doc["_id"] as? String else {
-                throw Abort(.internalServerError, reason: "ocurrio un error obteniendo el link id de los matches")
-            }
-            let linkId = UUID(uuidString: linkStringId)
-            
-            guard let linked = try? await GoMatch.query(on: db)
-                .filter(\.$linkId == linkId)
-                .all() else {
-                throw Abort(.internalServerError, reason: "ocurrio un error obteniendos los matches ligados a link id")
-            }
-            linkedMatches.append(contentsOf: linked)
-            
-            for l in linked {
-                print(l.id ?? "nil", " ", l.linkId ?? "nil")
-            }
-        }*/
-        
-        return []
-    }
+    }*/
 }

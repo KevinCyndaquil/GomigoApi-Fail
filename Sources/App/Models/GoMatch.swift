@@ -38,11 +38,11 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     var status: Status
     
     @Field(key: "requests")
-    var requests: [MongoRef] //REF
+    var requests: Set<MongoRef> //REF
     
     init() { }
     
-    init(id: UUID? = nil, leader: MongoRef, members: Set<GoMember>, requirements: GoPreferences? = nil, groupLength: Int, destination: Place, transport: TransportServices, status: Status, requests: [MongoRef]) {
+    init(id: UUID? = nil, leader: MongoRef, members: Set<GoMember>, requirements: GoPreferences? = nil, groupLength: Int, destination: Place, transport: TransportServices, status: Status, requests: Set<MongoRef>) {
         self.id = id
         self.leader = leader
         self.members = members
@@ -86,6 +86,17 @@ extension GoMatch {
         print("current h3 distance ", distance)
         
         return distance <= 5
+    }
+}
+
+extension GoMatch {
+    func mustActive() throws {
+        if status == .canceled || status == .finalized {
+            throw Abort(.badRequest, reason: "Match ya finalizado")
+        }
+        if groupLength == members.count + 1 {
+            throw Abort(.badRequest, reason: "Grupo ya completado")
+        }
     }
 }
 

@@ -13,7 +13,8 @@ struct GoUserController: RouteCollection {
         let userRoute = routes.grouped("user")
         
         userRoute.get(use: self.index)
-        userRoute.post(use: self.register)
+        userRoute.post("register", use: self.register)
+        userRoute.post("login", use: self.login)
         userRoute.put("localize", use: self.localize)
     }
     
@@ -30,6 +31,14 @@ struct GoUserController: RouteCollection {
         
         try await goUser.save(on: req.db)
         return goUser
+    }
+    
+    @Sendable
+    func login(req: Request) async throws -> GoUser {
+        let userService = try UserService(database: req.db)
+        let credential = try req.content.decode(Credentials.self)
+        
+        return try await userService.login(credential: credential)
     }
     
     @Sendable

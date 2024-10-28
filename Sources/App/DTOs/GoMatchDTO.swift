@@ -32,15 +32,15 @@ extension GoMatchDTO {
             destination: self.destination,
             transport: self.transport,
             status: self.status,
-            requests: self.request.map {
+            requests: Set(self.request.map {
                 MongoRef(id: $0.id!)
-            })
+            }))
     }
 }
 
 extension GoMatch {
     func toDTO(db: any Database) async throws -> GoMatchDTO {
-        let userService = UserService(database: db)
+        let userService = try UserService(database: db)
         
         guard let leader = try? await userService.select(id: self.leader.id) else {
             throw Abort(.badRequest, reason: "leader no pudo ser encontrado")
@@ -82,9 +82,21 @@ struct GoUserMatchable: Content {
     var groupLength: Int
 }
 
+struct GoMatchResponse: Content {
+    var matchId: MongoRef
+    var fromUser: MongoRef
+    var replyToUser: MongoRef
+}
+
+struct GoMatchRequest: Content {
+    var matchId: MongoRef
+    var requesterId: MongoRef
+}
+
 struct GoMatchFinalized: Content {
     var user: MongoRef
     var match: MongoRef
+    var leader: MongoRef?
 }
 
 struct GoMatchPost: Content {
