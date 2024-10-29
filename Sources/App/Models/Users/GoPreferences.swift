@@ -35,7 +35,7 @@ final class GoPreferences: Fields, @unchecked Sendable {
     static let common = GoPreferences(
         matchingSex: [.male, .female],
         matchingGender: [.female, .male, .no_binary],
-        ageRange: [.childhood, .elder],
+        ageRange: [.childhood, .puberty, .teenager, .young_adult, .adult, .elder],
         matchForeigns: true)
 }
 

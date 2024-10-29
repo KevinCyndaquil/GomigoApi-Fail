@@ -1,26 +1,48 @@
 [
     {
-        "poster": {
-            "id": "C51B483A-7521-4D31-AB75-7E483FF87975"
+        "userFindingMatches": {
+            "id": "EA90275E-4E29-4196-88B5-4F35D7AE5576"
         },
-        "currentUbication": {
+        "currentUbication":  {
             "country": "mexico",
             "city": "tapachula",
-            "name": "unach",
-            "type": "school",
-            "latitude": 140.7812,
-            "longitude": -10.019
+            "name": "unach negocios",
+            "type": "escuela",
+            "latitude": 14.896083,
+            "longitude": -92.272471
         },
         "destination": {
             "country": "mexico",
             "city": "tapachula",
-            "name": "unach",
-            "type": "school",
-            "latitude": 90.231,
-            "longitude": -90.129
+            "name": "liverpool",
+            "type": "tienda departamental",
+            "latitude": 14.893377,
+            "longitude": -92.274402
         },
-        "groupLength": 3,
-        "status": "processing",
-        "viewers": []
+        "groupLength": 2,
+        "transport": "mototaxi"
+    },
+    {
+        "userFindingMatches": {
+            "id": "D9CAF164-8646-4D33-B9AD-7EEECB6CB741"
+        },
+        "currentUbication":  {
+            "country": "mexico",
+            "city": "tapachula",
+            "name": "kafeto",
+            "type": "plaza",
+            "latitude": 14.898616,
+            "longitude": -92.272079
+        },
+        "destination": {
+            "country": "mexico",
+            "city": "tapachula",
+            "name": "liverpool",
+            "type": "tienda departamental",
+            "latitude": 14.893377,
+            "longitude": -92.274402
+        },
+        "groupLength": 2,
+        "transport": "mototaxi"
     }
 ]

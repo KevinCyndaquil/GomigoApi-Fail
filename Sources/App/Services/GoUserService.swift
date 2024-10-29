@@ -10,12 +10,12 @@ import Fluent
 import FluentMongoDriver
 import MongoKitten
 
-final class UserService {
+final class GoUserService {
     let db: any Database
     let mongodb: MongoDatabase
     
-    init(database: any Database) throws {
-        self.db = database
+    init(on: any Database) throws {
+        self.db = on
         self.mongodb = try MongoController.client(db: self.db)
     }
     
@@ -35,7 +35,9 @@ final class UserService {
             .first() else {
             throw Abort(.unauthorized, reason: "credenciales invalidas")
         }
-        user.login = true
-        return try await user.update(on: db)
+        user.online = true
+        try await user.update(on: db)
+        
+        return user
     }
 }

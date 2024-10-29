@@ -17,6 +17,6 @@ extension GoRequest {
     func toDTO() -> GoRequestDTO {
         return GoRequestDTO(
             id: self.id,
-            response: self.response ?? .waiting)
+            response: self.response)
     }
 }

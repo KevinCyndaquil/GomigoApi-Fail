@@ -19,10 +19,11 @@ struct GoMatchController: RouteCollection {
         matchRouter.post("look", use: self.look)
         matchRouter.post("filter", use: self.filter)
         matchRouter.post("request", use: self.request)
-        matchRouter.put("response", use: self.accept)
-        matchRouter.put("decline", use: self.decline)
+        matchRouter.put("getout", use: self.getout)
         
         let responseRoute = matchRouter.grouped("responses")
+        responseRoute.put("accept", use: self.accept)
+        responseRoute.put("decline", use: self.decline)
         responseRoute.post("client", use: self.checkResponse)
     }
     
@@ -35,8 +36,8 @@ struct GoMatchController: RouteCollection {
     func begin(req: Request) async throws -> GoMatchDTO {
         let matchService = try GoMatchService(on: req.db)
         
-        let matchPost = try req.content.decode(GoMatchPostable.self)
-        let match = try await matchService.generate(with: matchPost)
+        let postable = try req.content.decode(GoUserMatchable.self)
+        let match = try await matchService.generate(with: postable)
         
         return try await match.toDTO(db: req.db)
     }
@@ -46,7 +47,7 @@ struct GoMatchController: RouteCollection {
         let matchService = try GoMatchService(on: req.db)
         
         guard let matchRef: MongoRef = try? req.content.decode(MongoRef.self) else {
-            throw Abort(.badRequest, reason: "match id es invalida")
+            throw Abort(.badRequest, reason: "match reference no es entendible")
         }
         
         let match = try await matchService.select(id: matchRef.id)
@@ -64,7 +65,7 @@ struct GoMatchController: RouteCollection {
     @Sendable
     func filter(req: Request) async throws -> [GoMatchDTO] {
         guard let matchable = try? req.content.decode(GoUserMatchable.self) else {
-            throw Abort(.badRequest, reason: "Objeto invalido")
+            throw Abort(.badRequest, reason: "usuario matchable no es entendible")
         }
         let matchService = try GoMatchService(on: req.db)
         
@@ -81,11 +82,10 @@ struct GoMatchController: RouteCollection {
     
     @Sendable
     func request(req: Request) async throws -> GoMatchDTO {
-        let userService = try UserService(database: req.db)
         let matchService = try GoMatchService(on: req.db)
         
         guard let matchable = try? req.content.decode(GoMatchRequest.self) else {
-            throw Abort(.badRequest, reason: "Match request invalida")
+            throw Abort(.badRequest, reason: "Match request no es entendible")
         }
         
         print("hola bb")
@@ -97,34 +97,31 @@ struct GoMatchController: RouteCollection {
     }
     
     @Sendable
-    func accept(req: Request) async throws -> GoMatch {
+    func accept(req: Request) async throws -> GoMatchDTO {
         let matchService = try GoMatchService(on: req.db)
-        let userService = matchService.userService
         
         guard let response = try? req.content.decode(GoMatchResponse.self) else {
-            throw Abort(.badRequest, reason: "match id es invalida")
+            throw Abort(.badRequest, reason: "match response no es entendible")
         }
         let match = try await matchService.select(id: response.matchId.id)
         
-        try match.mustActive()
-        return try await matchService.accept(from: match, responser: response.fromUser, requester: response.replyToUser)
+        let acceptedMatch = try await matchService.accept(from: match, responser: response.fromUser, requester: response.replyToUser)
+        
+        return try await acceptedMatch.toDTO(db: req.db)
     }
     
     @Sendable
     func decline(req: Request) async throws -> Response {
         let matchService = try GoMatchService(on: req.db)
-        let userService = matchService.userService
         
-        guard let response = try? req.content.decode(GoMatchResponse.self) else {
-            throw Abort(.badRequest, reason: "match id es invalida")
+        guard let response = try? req.content.decode(GoGetoutMatch.self) else {
+            throw Abort(.badRequest, reason: "match getout no es entendible")
         }
         let match = try await matchService.select(id: response.matchId.id)
-        let user = try await userService.select(id: response.replyToUser.id)
         
-        try match.mustActive()
-        let _ = try await matchService.decline(leader: response.fromUser, from: match, requester: response.replyToUser)
+        let _ = try await matchService.decline(leader: response.requesterId, from: match, requester: response.userToGetout)
         
-        if response.fromUser == match.leader {
+        if response.requesterId == match.leader {
             return Response(status: .ok, body: "Se ha eliminado la petición correctamente")
         } else {
             return Response(status: .ok, body: "Se ha denegado la petición exitosamente")
@@ -132,13 +129,31 @@ struct GoMatchController: RouteCollection {
     }
     
     @Sendable
-    func checkResponse(req: Request) async throws -> GoMatch {
+    func getout(req: Request) async throws -> Response {
+        let matchService = try GoMatchService(on: req.db)
+        
+        guard let request = try? req.content.decode(GoGetoutMatch.self) else {
+            throw Abort(.badRequest, reason: "Match getout no es entendible")
+        }
+        let match = try await matchService.select(id: request.matchId.id)
+        
+        let _ = try await matchService.getout(leader: request.requesterId, from: match, getoutUser: request.userToGetout)
+        
+        if request.requesterId == match.leader {
+            return Response(status: .ok, body: "Se ha sacado a un miembro del grupo correctamente correctamente")
+        } else {
+            return Response(status: .ok, body: "Te has salido del grupo exitosamente")
+        }
+    }
+    
+    @Sendable
+    func checkResponse(req: Request) async throws -> GoMatchDTO {
         guard let request = try? req.content.decode(GoMatchRequest.self) else {
-            throw Abort(.badRequest, reason: "Objeto invalido")
+            throw Abort(.badRequest, reason: "match request no es entendible")
         }
         let matchService = try GoMatchService(on: req.db)
         let match = try await matchService.select(id: request.matchId.id)
         
-        return try matchService.wasAccepted(match: match, requester: request.requesterId)
+        return try await matchService.wasAccepted(match: match, requester: request.requesterId).toDTO(db: req.db)
     }
 }

@@ -12,4 +12,5 @@ func routes(_ app: Application) throws {
     
     try app.register(collection: GoUserController())
     try app.register(collection: GoMatchController())
+    try app.register(collection: GoTravelController())
 }

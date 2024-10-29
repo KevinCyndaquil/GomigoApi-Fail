@@ -48,17 +48,17 @@ extension Place {
         return (x, y, z)
     }
     
-    static func calculateMeetingPoint(people: [Place]) -> Place {
+    static func calculateMeetingPoint(of: [Place]) -> Place {
         var coor = (x: 0.0, y: 0.0, z: 0.0)
         
-        for person in people {
+        for person in of {
             let (cartX, cartY, cartZ) = toCartesian(coor: person)
             coor.x += cartX
             coor.y += cartY
             coor.z += cartZ
         }
         
-        let total = Double(people.count)
+        let total = Double(of.count)
         coor.x /= total
         coor.y /= total
         coor.z /= total

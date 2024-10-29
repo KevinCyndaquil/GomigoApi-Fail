@@ -1,66 +1,93 @@
 [
     {
+        "name": "kevin alejandro",
+        "lastname": "francisco gonzález",
         "nickname": "kevincyn",
+        "birthday": "2003-05-18T00:00:00Z",
         "password": "xd",
         "files": {
             "curp": "kafg"
         },
         "properties": {
-            "name": "kevin alejandro",
-            "lastname": "francisco gonzalez",
+            "sex": "male",
             "gender": "male",
             "nationality": "mexicano",
-            "birthday": "2003-05-18T00:00:00Z",
-            "age": 21,
-            "emergencyContact": []
+        },
+        "domicilie": {
+            "street": "calle1",
+            "insideNumber": "h2",
+            "country": "mexico",
+            "state": "chiapas",
+            "town": "tapachula",
+            "postalCode": "30795",
+            "colony": "indeco"
         },
         "contact": {
             "phoneNumber": "962 185",
             "emailAddress": "kevin@unach.mx",
             "facebook": "http:/facebooj.com/kevin"
-        }
+        },
+        "emergencyContact": []
     },
     {
-        "nickname": "Chus",
-        "password": "xd12345",
+        "name": "Eduardo",
+        "lastname": "Solórzano Santos",
+        "nickname": "Solorzano",
+        "birthday": "2004-08-15T12:00:00Z",
+        "password": "12345678",
         "files": {
-            "curp": "3456gfd"
+            "curp": "sojfjdslkfa"
         },
         "properties": {
-            "name": "Jesus Eduardo",
-            "lastname": "Ortega Armenta",
-            "gender": "female",
-            "nationality": "Haitiano",
-            "birthday": "2004-03-24T00:00:00Z",
-            "age": 20,
-            "emergencyContact": []
-        },
-        "contact": {
-            "phoneNumber": "962 185 222 22",
-            "emailAddress": "chus@unach.mx",
-            "facebook": "http:/faceboog.com/kevin"
-        }
-    },
-    {
-        "nickname": "albertox",
-        "password": "maidanauwu02",
-        "files": {
-            "curp": "paaa34343434"
-        },
-        "properties": {
-            "name": "Alberto Rafael",
-            "lastname": "Palomeque Avendano",
+            "sex": "male",
             "gender": "male",
             "nationality": "mexicano",
-            "birthday": "2004-10-02T00:00:00Z",
-            "age": 20,
-            "emergencyContact": []
+        },
+        "domicilie": {
+            "street": "calle 2",
+            "insideNumber": "4",
+            "country": "mexico",
+            "state": "chiapas",
+            "town": "tapachula",
+            "postalCode": "30700",
+            "colony": "centro"
         },
         "contact": {
-            "phoneNumber": "962 150",
-            "emailAddress": "alberto@unach.mx",
-            "facebook": "http:/facebooj.com/alberto1"
-        }
+            "phoneNumber": "962 269 6188",
+            "emailAddress": "eduardo.solorzano51@unach.mx",
+            "facebook": "http://facebook.com/eduardo"
+        },
+        "emergencyContact": []
+    },
+    {
+        "name": "Alberto Rafael",
+        "lastname": "Palomeque Avendaño",
+        "nickname": "Alberto",
+        "birthday": "2004-10-02T12:00:00Z",
+        "password": "hola",
+        "files": {
+            "curp": "paaa04100186bhb"
+        },
+        "properties": {
+            "sex": "male",
+            "gender": "male",
+            "nationality": "mexicano",
+        },
+        "domicilie": {
+            "street": "calle 2",
+            "insideNumber": "4",
+            "country": "mexico",
+            "state": "chiapas",
+            "town": "tapachula",
+            "postalCode": "30700",
+            "colony": "centro"
+        },
+        "contact": {
+            "phoneNumber": "962 150 7030",
+            "emailAddress": "alberto.palomeque@unach.mx",
+            "facebook": "http://facebook.com/alberto"
+        },
+        "emergencyContact": []
     }
 ]
 

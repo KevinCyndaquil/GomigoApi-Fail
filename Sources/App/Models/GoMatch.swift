@@ -37,6 +37,9 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     @Field(key: "status")
     var status: Status
     
+    @Field(key: "travel")
+    var travel: MongoRef?
+    
     init() { }
     
     init(id: UUID? = nil, leader: MongoRef, members: Set<MongoRef>, requests: Set<MongoRef>, groupLength: Int, destination: Place, transport: TransportServices, status: Status) {
@@ -71,7 +74,7 @@ extension GoMatch {
             print("p(lat:", p.latitude, " lon:", p.longitude, ")")
         }
         
-        let meetingPoint = Place.calculateMeetingPoint(people: places)
+        let meetingPoint = Place.calculateMeetingPoint(of: places)
         
         print("meeting point lat:", meetingPoint.latitude, " lon:", meetingPoint.longitude)
         
@@ -88,13 +91,6 @@ extension GoMatch {
         members.reduce(true, {
             $0 && $1.areMatching(with: requester.properties)
         })
-        
-        /*for member in members {
-            if !member.areMatching(with: requester.properties) {
-                return false
-            }
-        }
-        return true*/
     }
     
     static func depureRequest(members: [GoUser], requests: [GoUser]) -> [GoUser] {
@@ -106,13 +102,19 @@ extension GoMatch {
 
 extension GoMatch {
     
-    func mustActive() throws {
+    func mustActive() throws -> GoMatch {
         if status == .canceled || status == .finalized {
             throw Abort(.badRequest, reason: "Match ya finalizado")
         }
+        return self
+    }
+    
+    func isCompleted() throws -> GoMatch {
         if groupLength == members.count + 1 {
             throw Abort(.badRequest, reason: "Grupo ya completado")
         }
+        
+        return self
     }
 }
 

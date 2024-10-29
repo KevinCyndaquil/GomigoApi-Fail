@@ -35,7 +35,7 @@ struct GoUserController: RouteCollection {
     
     @Sendable
     func login(req: Request) async throws -> GoUser {
-        let userService = try UserService(database: req.db)
+        let userService = try GoUserService(on: req.db)
         let credential = try req.content.decode(Credentials.self)
         
         return try await userService.login(credential: credential)

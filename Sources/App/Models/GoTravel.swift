@@ -16,13 +16,10 @@ final class GoTravel: Model, @unchecked Sendable, Content {
     var id: UUID?
     
     @Field(key: "meeting_point")
-    var meetingPoint: Place?
+    var meetingPoint: Place
     
     @Field(key: "destination")
     var destination: Place
-    
-    @Field(key: "group_leader")
-    var groupLeader: MongoRef //GoUser
     
     @Field(key: "travelers")
     var travelers: [MongoRef] //GoUser[]
@@ -34,9 +31,22 @@ final class GoTravel: Model, @unchecked Sendable, Content {
     var arrivalDate: Date?
     
     @Field(key: "transport_service")
-    var transport_service: TransportServices?
+    var transport: TransportServices
+
+    @Field(key: "status")
+    var status: Status
     
-    //@Field(key: "status")
-    //var status: TravelStatus
+    @Field(key: "posible_travelers")
+    var posibleTravelers: [MongoRef]
     
+    @Field(key: "canceled_travelers")
+    var canceledTravelers: [MongoRef]
+    
+    enum Status: String, Content {
+        case waiting_confirmation
+        case on_road
+        case at_meeting_point
+        case finished
+        case canceled
+    }
 }

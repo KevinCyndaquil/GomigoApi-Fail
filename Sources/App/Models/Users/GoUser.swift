@@ -99,20 +99,14 @@ final class GoUser: Model, @unchecked Sendable, Content {
 
 extension GoUser {
     
-    func setProperties(sex: Sex, gender: Gender, nationality: String) {
-        self.properties = GoProperties(
-            sex: sex,
-            gender: gender,
-            nationality: nationality,
-            ageRange: AgeRange.range(birthday: self.birthday)!)
-    }
-    
     func areMatching(with preferences: GoProperties) -> Bool {
+        let ageRange = AgeRange.range(birthday: self.birthday)!
+        
         return self.preferences.matchingSex.contains(preferences.sex)
         &&
         self.preferences.matchingGender.contains(preferences.gender)
         &&
-        self.preferences.ageRange.contains(preferences.ageRange)
+        self.preferences.ageRange.contains(ageRange)
         &&
         (self.preferences.matchForeigns ? self.properties.nationality == preferences.nationality : true)
     }
