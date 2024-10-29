@@ -10,6 +10,9 @@ import Fluent
 
 final class GoPreferences: Fields, @unchecked Sendable {
     
+    @Field(key: "matchin_sex")
+    var matchingSex: Set<Sex>
+    
     @Field(key: "matching_gender")
     var matchingGender: Set<Gender>
     
@@ -21,30 +24,36 @@ final class GoPreferences: Fields, @unchecked Sendable {
     
     init() { }
     
-    init(matchingGender: Set<Gender>, ageRange: Set<AgeRange>, matchForeignes: Bool) {
+    
+    init(matchingSex: Set<Sex>, matchingGender: Set<Gender>, ageRange: Set<AgeRange>, matchForeigns: Bool) {
+        self.matchingSex = matchingSex
         self.matchingGender = matchingGender
         self.ageRange = ageRange
-        self.matchForeigns = matchForeignes
+        self.matchForeigns = matchForeigns
     }
     
     static let common = GoPreferences(
+        matchingSex: [.male, .female],
         matchingGender: [.female, .male, .no_binary],
         ageRange: [.childhood, .elder],
-        matchForeignes: true)
+        matchForeigns: true)
 }
 
 extension GoPreferences {
 
-    func intersection(with groupB: GoPreferences) -> GoPreferences {
+    func intersection(with rhs: GoPreferences) -> GoPreferences {
+        let matchingSex = self.matchingSex
+            .intersection(rhs.matchingSex)
         let matchingGender = self.matchingGender
-            .intersection(groupB.matchingGender)
+            .intersection(rhs.matchingGender)
         let ageRange = self.ageRange
-            .intersection(groupB.ageRange)
-        let matchForeigns = self.matchForeigns && groupB.matchForeigns
+            .intersection(rhs.ageRange)
+        let matchForeigns = self.matchForeigns && rhs.matchForeigns
         
         return GoPreferences(
+            matchingSex: matchingSex,
             matchingGender: matchingGender,
             ageRange: ageRange,
-            matchForeignes: matchForeigns)
+            matchForeigns: matchForeigns)
     }
 }

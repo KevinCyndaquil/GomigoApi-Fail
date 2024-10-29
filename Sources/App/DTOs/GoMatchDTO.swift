@@ -55,7 +55,7 @@ extension GoMatch {
         }
         
         let requests: [GoUserDTO] = []
-        for r in self.requests {
+        for r in self.yano {
             guard let savedRequest = try? await userService.select(id: r.id) else {
                 throw Abort(.badGateway, reason: "member no pudo ser encontrado")
             }
@@ -75,8 +75,8 @@ extension GoMatch {
 }
 
 struct GoUserMatchable: Content {
-    var matchId: UUID?
-    var user: MongoRef
+    var matchId: MongoRef
+    var userFindingMatches: MongoRef
     var currentUbication: Place
     var destination: Place
     var groupLength: Int
@@ -99,15 +99,15 @@ struct GoMatchFinalized: Content {
     var leader: MongoRef?
 }
 
-struct GoMatchPost: Content {
+struct GoMatchPostable: Content {
     var leader: GoUserMatchable
     var transport: TransportServices
 }
 
-extension GoMatchPost {
+extension GoMatchPostable {
     func toModel() -> GoMatch {
         GoMatch(
-            leader: MongoRef(id: leader.user.id),
+            leader: MongoRef(id: leader.userFindingMatches.id),
             members: [],
             groupLength: self.leader.groupLength,
             destination: self.leader.destination,

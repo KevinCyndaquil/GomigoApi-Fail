@@ -7,6 +7,11 @@
 
 import Vapor
 
+enum Sex: String, Content {
+    case male
+    case female
+}
+
 enum Gender: String, Content {
     case male
     case female

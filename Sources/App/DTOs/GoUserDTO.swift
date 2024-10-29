@@ -10,8 +10,11 @@ import Fluent
 
 struct GoUserDTO: Content {
     var id: UUID?
-    var nickname: String //
-    var password: String //
+    var name: String
+    var lastname: String
+    var nickname: String
+    var password: String
+    var birthday: Date
     var icon: Data?
     var score: Float
     var description: String
@@ -32,7 +35,7 @@ struct GoUserPost: Content {
     var nickname: String
     var password: String
     var files: GoFilesId
-    var properties: GoPersonalProperties
+    var properties: GoProperties
     var contact: GoContact
 }
 

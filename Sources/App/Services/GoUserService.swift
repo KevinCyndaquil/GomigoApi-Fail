@@ -35,6 +35,7 @@ final class UserService {
             .first() else {
             throw Abort(.unauthorized, reason: "credenciales invalidas")
         }
-        return user
+        user.login = true
+        return try await user.update(on: db)
     }
 }

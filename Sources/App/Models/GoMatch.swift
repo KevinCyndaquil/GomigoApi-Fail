@@ -20,10 +20,10 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     var leader: MongoRef // GoUser
     
     @Field(key: "members")
-    var members: Set<GoMember> //GoMember
+    var members: Set<MongoRef> //GoUser
     
-    @Field(key: "requirements")
-    var requirements: GoPreferences?
+    @Field(key: "requests")
+    var requests: Set<MongoRef> //GoUser
     
     @Field(key: "group_length")
     var groupLength: Int
@@ -37,21 +37,17 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     @Field(key: "status")
     var status: Status
     
-    @Field(key: "requests")
-    var requests: Set<MongoRef> //REF
-    
     init() { }
     
-    init(id: UUID? = nil, leader: MongoRef, members: Set<GoMember>, requirements: GoPreferences? = nil, groupLength: Int, destination: Place, transport: TransportServices, status: Status, requests: Set<MongoRef>) {
+    init(id: UUID? = nil, leader: MongoRef, members: Set<MongoRef>, requests: Set<MongoRef>, groupLength: Int, destination: Place, transport: TransportServices, status: Status) {
         self.id = id
         self.leader = leader
         self.members = members
-        self.requirements = requirements
+        self.requests = requests
         self.groupLength = groupLength
         self.destination = destination
         self.transport = transport
         self.status = status
-        self.requests = requests
     }
     
     enum Status: Int, Content {
@@ -62,14 +58,13 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     }
 }
 
+
 extension GoMatch {
     
     static func nearest(from request: GoUserMatchable, to users: [GoUser]) -> Bool {
         let currentH3Index = request.currentUbication.toH3Index()
         
-        var places = users.map {
-            $0.currentUbication!
-        }
+        var places = users.map { $0.currentUbication! }
         places.append(request.currentUbication)
         
         for p in places {
@@ -87,9 +82,30 @@ extension GoMatch {
         
         return distance <= 5
     }
+    
+    /// We can know if a requester, can join a group based in their personal preferences and properties
+    static func preferencesMatching(requester: GoUser, members: [GoUser]) -> Bool {
+        members.reduce(true, {
+            $0 && $1.areMatching(with: requester.properties)
+        })
+        
+        /*for member in members {
+            if !member.areMatching(with: requester.properties) {
+                return false
+            }
+        }
+        return true*/
+    }
+    
+    static func depureRequest(members: [GoUser], requests: [GoUser]) -> [GoUser] {
+        return requests.filter {
+            preferencesMatching(requester: $0, members: members)
+        }
+    }
 }
 
 extension GoMatch {
+    
     func mustActive() throws {
         if status == .canceled || status == .finalized {
             throw Abort(.badRequest, reason: "Match ya finalizado")

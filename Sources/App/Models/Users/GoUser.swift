@@ -14,6 +14,12 @@ final class GoUser: Model, @unchecked Sendable, Content {
     @ID(key: .id)
     var id: UUID?
     
+    @Field(key: "name")
+    var name: String
+    
+    @Field(key: "lastname")
+    var lastname: String
+    
     @Field(key: "nickname")
     var nickname: String
     
@@ -24,7 +30,10 @@ final class GoUser: Model, @unchecked Sendable, Content {
     var icon: Data?
     
     @Field(key: "properties")
-    var properties: GoPersonalProperties
+    var properties: GoProperties
+    
+    @Field(key: "domicilie")
+    var domicilie: GoDomicilie
 
     @Field(key: "files")
     var files: GoFilesId
@@ -44,6 +53,9 @@ final class GoUser: Model, @unchecked Sendable, Content {
     @Field(key: "description")
     var description: String
     
+    @Field(key: "birthday")
+    var birthday: Date
+    
     @Field(key: "contact")
     var contact: GoContact
     
@@ -53,48 +65,55 @@ final class GoUser: Model, @unchecked Sendable, Content {
     @Field(key: "online")
     var online: Bool
     
-    @Field(key: "matching")
-    var matching: Bool
-    
     @Field(key: "friends")
     var friends: [MongoRef] //GoUser
     
+    @Field(key: "emergency_contact")
+    var emergencyContact: [GoContact]
+    
     init() { }
     
-    init(id: UUID? = nil, nickname: String, password: String, icon: Data? = nil, properties: GoPersonalProperties, files: GoFilesId, travels: [MongoRef], preferences: GoPreferences, stadistics: GoStadistics, score: Float, description: String, contact: GoContact, currentUbication: Place? = nil, online: Bool, matching: Bool, friends: [MongoRef]) {
+    init(id: UUID? = nil, name: String, lastname: String, nickname: String, password: String, icon: Data? = nil, properties: GoProperties, domicilie: GoDomicilie, files: GoFilesId, travels: [MongoRef], preferences: GoPreferences, stadistics: GoStadistics, score: Float, description: String, birthday: Date, contact: GoContact, currentUbication: Place? = nil, online: Bool, friends: [MongoRef], emergencyContact: [GoContact]) {
         self.id = id
+        self.name = name
+        self.lastname = lastname
         self.nickname = nickname
         self.password = password
         self.icon = icon
         self.properties = properties
+        self.domicilie = domicilie
         self.files = files
         self.travels = travels
         self.preferences = preferences
         self.stadistics = stadistics
         self.score = score
         self.description = description
+        self.birthday = birthday
         self.contact = contact
         self.currentUbication = currentUbication
         self.online = online
-        self.matching = matching
         self.friends = friends
+        self.emergencyContact = emergencyContact
     }
 }
 
 extension GoUser {
     
-    func match(with user: GoUser) -> Bool {
-        let userAgeRange = AgeRange.range(birthday: user.properties.birthday)!
-        
-        var wasMatch = preferences.matchingGender
-                .contains(user.properties.gender) &&
-            preferences.ageRange
-                .contains(userAgeRange)
-        
-        if !preferences.matchForeigns {
-            wasMatch = properties.nationality == user.properties.nationality
-        }
-        
-        return wasMatch
+    func setProperties(sex: Sex, gender: Gender, nationality: String) {
+        self.properties = GoProperties(
+            sex: sex,
+            gender: gender,
+            nationality: nationality,
+            ageRange: AgeRange.range(birthday: self.birthday)!)
+    }
+    
+    func areMatching(with preferences: GoProperties) -> Bool {
+        return self.preferences.matchingSex.contains(preferences.sex)
+        &&
+        self.preferences.matchingGender.contains(preferences.gender)
+        &&
+        self.preferences.ageRange.contains(preferences.ageRange)
+        &&
+        (self.preferences.matchForeigns ? self.properties.nationality == preferences.nationality : true)
     }
 }
