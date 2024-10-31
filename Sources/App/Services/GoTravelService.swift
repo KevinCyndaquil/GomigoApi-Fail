@@ -39,28 +39,4 @@ final class GoTravelService {
         
         return travel
     }
-    
-    func accept(traveler travelerRef: MongoRef, travel: GoTravel) async throws {
-        _ = try await userService.select(id: travelerRef.id)
-        if travel.posibleTravelers.remove(travelerRef) == nil {
-            throw Abort(.badGateway, reason: "estás tratando de añadir a un usuario que no es parte del viaje")
-        }
-        travel.travelers.insert(travelerRef)
-        
-        if travel.posibleTravelers.isEmpty && travel.canceledTravelers.isEmpty {
-            travel.status = .on_road
-        }
-        
-        try await travel.update(on: db)
-    }
-    
-    func decline(traveler travelerRef: MongoRef, travel: GoTravel) async throws {
-        _ = try await userService.select(id: travelerRef.id)
-        if travel.posibleTravelers.remove(travelerRef) == nil {
-            throw Abort(.badGateway, reason: "estás tratando de añadir a un usuario que no es parte del viaje")
-        }
-        travel.canceledTravelers.insert(travelerRef)
-        
-        try await travel.update(on: db)
-    }
 }

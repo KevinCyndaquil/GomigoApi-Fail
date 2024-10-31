@@ -7,7 +7,6 @@
 
 import Vapor
 import Fluent
-import FluentMongoDriver
 import MongoKitten
 
 final class GoUserService {
@@ -46,5 +45,56 @@ final class GoUserService {
         
         user.currentUbication = matchable.currentUbication
         try await user.update(on: db)
+    }
+    
+    func populate(country: String, town: String) async throws -> [Place] {
+        let matchCollection = mongodb[GoMatch.schema]
+        let oneWeekAgo = Date().addingTimeInterval(-7 * 24 * 60 * 60)
+        
+        let groupDocument: Document = [
+            "_id": [
+                "country": "$destination.country",
+                "city": "$destination.city",
+                "name": "$destination.name"],
+            "count": ["$sum": 1],
+            "latitude": ["$first": "$destination.latitude"],
+            "longitude": ["$first": "$destination.longitude"],
+            "type": ["$first": "$destination.type"]
+        ]
+        
+        // agregar filtro por pais y ciudad
+        let pipeline: [AggregateBuilderStage] = [
+            //.match("creation_date" >= oneWeekAgo),
+            .match([
+                "creation_date": ["$gte": oneWeekAgo],
+                "destination.country": country,
+                "destination.city": town,
+            ]),
+            .init(document: ["$group": groupDocument]),
+        ]
+        
+        let groupedDocuments = try await matchCollection
+            .aggregate(pipeline)
+            .allResults()
+        
+        print(groupedDocuments.count)
+        
+        var places: [Place] = []
+        for doc in groupedDocuments {
+            print(doc)
+            let details: Document = doc["_id"] as! Document
+            
+            places.append(
+                Place(
+                    country: details["country"] as! String,
+                    city: details["city"] as! String,
+                    name: details["name"] as! String,
+                    type: doc["type"] as! String,
+                    latitude: doc["latitude"] as! Double,
+                    longitude: doc["longitude"] as! Double)
+            )
+        }
+        
+        return places
     }
 }

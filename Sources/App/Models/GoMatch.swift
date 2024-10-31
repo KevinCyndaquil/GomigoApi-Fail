@@ -43,12 +43,16 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     @Field(key: "current_meeting_point")
     var currentMeetingPoint: Place?
     
+    @Field(key: "creation_date")
+    var creationDate: Date
+    
     init() {
         self.travel = nil
         self.currentMeetingPoint = nil
+        self.creationDate = Date.now
     }
     
-    init(id: UUID? = nil, leader: MongoRef, members: Set<MongoRef>, requests: Set<MongoRef>, groupLength: Int, destination: Place, transport: TransportServices, status: Status) {
+    init(id: UUID? = nil, leader: MongoRef, members: Set<MongoRef>, requests: Set<MongoRef>, groupLength: Int, destination: Place, transport: TransportServices, status: Status, creationDate: Date) {
         self.id = id
         self.leader = leader
         self.members = members
@@ -59,6 +63,7 @@ final class GoMatch: Model, @unchecked Sendable, Content {
         self.status = status
         self.travel = nil
         self.currentMeetingPoint = nil
+        self.creationDate = creationDate
     }
     
     enum Status: Int, Content {

@@ -16,6 +16,7 @@ struct GoUserController: RouteCollection {
         userRoute.post("register", use: self.register)
         userRoute.post("login", use: self.login)
         userRoute.put("localize", use: self.localize)
+        userRoute.get("populate", use: self.populate)
     }
     
     @Sendable
@@ -53,5 +54,14 @@ struct GoUserController: RouteCollection {
         user.currentUbication = localizer.currentUbication
         try await user.update(on: req.db)
         return user.toDTO()
+    }
+    
+    @Sendable
+    func populate(req: Request) async throws -> [Place] {
+        let country = try req.query.get(String.self, at: "country")
+        let town = try req.query.get(String.self, at: "town")
+        
+        let userService = try GoUserService(on: req.db)
+        return try await userService.populate(country: country, town: town)
     }
 }

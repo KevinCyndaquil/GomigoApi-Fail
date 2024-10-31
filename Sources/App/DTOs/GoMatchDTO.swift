@@ -75,7 +75,8 @@ extension GoUserMatchable {
             groupLength: self.groupLength,
             destination: self.destination,
             transport: self.transport,
-            status: .processing)
+            status: .processing,
+            creationDate: Date.now)
     }
 }
 

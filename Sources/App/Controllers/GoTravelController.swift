@@ -15,9 +15,6 @@ struct GoTravelController: RouteCollection {
         
         travelRoute.post("look", use: self.look)
         
-        let responsesRoute = travelRoute.grouped("responses")
-        responsesRoute.post("accept", use: self.accept)
-        responsesRoute.put("decline", use: self.decline)
     }
     
     @Sendable
@@ -28,27 +25,5 @@ struct GoTravelController: RouteCollection {
         return try await travelService
             .look(request: request)
             .toDTO(db: req.db)
-    }
-    
-    @Sendable
-    func accept(req: Request) async throws -> GoTravelDTO {
-        let request = try req.content.decode(GoTravelRequest.self)
-        let travelService = try GoTravelService(on: req.db)
-        
-        let travel = try await travelService.select(id: request.travelId.id)
-        try await travelService.accept(traveler: request.fromUser, travel: travel)
-        
-        return try await travel.toDTO(db: req.db)
-    }
-    
-    @Sendable
-    func decline(req: Request) async throws -> GoTravelDTO {
-        let request = try req.content.decode(GoTravelRequest.self)
-        let travelService = try GoTravelService(on: req.db)
-        
-        let travel = try await travelService.select(id: request.travelId.id)
-        try await travelService.decline(traveler: request.fromUser, travel: travel)
-        
-        return try await travel.toDTO(db: req.db)
     }
 }

@@ -40,6 +40,15 @@ final class Place: Fields, @unchecked Sendable, Content {
         self.latitude = latitude
         self.longitude = longitude
     }
+    
+    init(country: String, city: String, name: String, type: String, latitude: Double, longitude: Double) {
+        self.country = country
+        self.city = city
+        self.name = name
+        self.type = type
+        self.latitude = latitude
+        self.longitude = longitude
+    }
 }
 
 extension Place {
