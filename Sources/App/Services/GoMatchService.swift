@@ -17,10 +17,10 @@ struct GoMatchService {
     
     let userService: GoUserService
     
-    init(on: any Database) throws {
-        self.mongodb = try MongoController.client(db: on)
-        self.db = on
-        self.userService = try GoUserService(on: on)
+    init(on db: any Database) throws {
+        self.mongodb = try MongoController.client(db: db)
+        self.db = db
+        self.userService = try GoUserService(on: db)
     }
     
     func select(id: UUID) async throws -> GoMatch {
@@ -43,8 +43,30 @@ struct GoMatchService {
         return match
     }
     
+    func look(request: GoMatchRequest) async throws -> GoMatch {
+        let match = try await select(id: request.matchId.id)
+        
+        if match.leader != request.requesterId {
+            if !match.members.contains(request.requesterId) {
+                throw Abort(.unauthorized, reason: "solo miembros del match pueden revisar su status")
+            }
+        }
+        
+        if match.status == .matched && match.travel == nil {
+            let travel = GoTravel(from: match)
+            try await travel.save(on: db)
+            
+            match.travel = MongoRef(id: travel.id!)
+            try await match.update(on: db)
+        }
+        
+        return match
+    }
+    
     func filter(matchable: GoUserMatchable) async throws -> [GoMatch] {
         let requester = try await userService.select(id: matchable.userFindingMatches.id)
+        requester.currentUbication = matchable.currentUbication
+        try await requester.update(on: db)
         
         guard var filteredMatches = try? await GoMatch.query(on: db)
             .filter(\.$status == .processing)
@@ -53,29 +75,20 @@ struct GoMatchService {
             .filter(\.$id != matchable.matchId?.id ?? UUID())
             .sort(\.$status, .ascending)
             .all() else {
-            throw Abort(.internalServerError, reason: "Error al buscar matches")
+            throw Abort(.internalServerError, reason: "Error al filtrar matches")
         }
         
-        print("Matches encontrado ", filteredMatches.count)
+        print("Matches encontrados ", filteredMatches.count)
         
-        filteredMatches = filteredMatches.filter ({
+        filteredMatches = filteredMatches.filter {
             $0.destination.distance(to: matchable.destination) <= maxDistanceFromCurrent
-        })
+        }
         
         print("Matches encontrados despues de filtrar por distancia ", filteredMatches.count)
         
         var nearbyMatches: [GoMatch] = []
-        
         for match in filteredMatches {
-            let members = try await defineMembers(match: match)
-            
-            print(GoMatch.preferencesMatching(requester: requester, members: members))
-            
-            if !GoMatch.preferencesMatching(requester: requester, members: members) {
-                continue
-            }
-            
-            if (GoMatch.nearest(from: matchable, to: members)) {
+            if try await self.match(user: requester, with: match) {
                 nearbyMatches.append(match)
             }
         }
@@ -84,16 +97,14 @@ struct GoMatchService {
         return nearbyMatches
     }
     
-    func add(from match: GoMatch, requester: MongoRef) async throws -> GoMatch {
-        let _ = try match
+    func add(from match: GoMatch, requester reqRef: MongoRef) async throws -> GoMatch {
+        _ = try match
             .mustActive()
             .isCompleted()
-        guard let _ = try? await userService.select(id: requester.id) else {
-            throw Abort(.badRequest, reason: "Requester no se encuentra registrado")
-        }
+
+        _ = try await userService.select(id: reqRef.id)
         
-        let (inserted, _) = match.requests.insert(requester)
-        if !inserted {
+        if !match.requests.insert(reqRef).inserted {
             throw Abort(.badRequest, reason: "Usuario ya ha pedido unirse al grupo")
         }
     
@@ -109,56 +120,41 @@ struct GoMatchService {
         if match.leader != responser {
             throw Abort(.badRequest, reason: "Solo el alfitrion del grupo puede aceptar peticiones de otros usuarios")
         }
-        let req = try await userService.select(id: requester.id)
-        let members = try await defineMembers(match: match)
-        
-        if !GoMatch.preferencesMatching(requester: req, members: members) {
-            match.requests.remove(requester)
-            try await match.update(on: db)
-            
-            throw Abort(.conflict, reason: "El grupo ya no entra dentro de las preferencias del requester")
-        }
-        
         if match.requests.remove(requester) == nil {
             throw Abort(.badRequest, reason: "Intentas aceptar una peticion de un usuario que no ha hecho ninguna request")
         }
         
-        let (inserted, _) = match.members.insert(requester)
-        if !inserted {
+        if !match.members.insert(requester).inserted {
             throw Abort(.badRequest, reason: "Request aceptada ya se encontraba como miembro")
         }
+        
         if match.members.count + 1 == match.groupLength {
             match.status = .matched
             match.requests = []
         } else {
-            let requests = try await defineRequests(match: match)
-            
-            match.requests = Set(GoMatch.depureRequest(members: members, requests: requests)
-                .map { MongoRef(id: $0.id!) })
+            match.requests = try await self.depure(from: match)
         }
+        
+        let places = try await defineMembers(match: match)
+            .map { $0.currentUbication! }
+        match.currentMeetingPoint = Place.calculateMeetingPoint(of: places)
         
         try await match.update(on: db)
         return match
     }
     
     func decline(leader: MongoRef?, from match: GoMatch, requester: MongoRef) async throws -> GoMatch {
-        let _ = try match.mustActive()
+        _ = try match.mustActive()
         
         if match.leader != leader {
             if !match.requests.contains(requester) {
                 throw Abort(.badRequest, reason: "Solo el alfitrion del grupo o quien realizo el request puede declinar una petición")
             }
         }
-        
         if match.requests.remove(requester) == nil {
             throw Abort(.badRequest, reason: "Intentas declinar una peticion de un usuario que no ha hecho ninguna request")
         }
-        
-        let members = try await defineMembers(match: match)
-        let requests = try await defineRequests(match: match)
-        
-        match.requests = Set(GoMatch.depureRequest(members: members, requests: requests)
-            .map { MongoRef(id: $0.id!) })
+        match.requests = try await self.depure(from: match)
         
         try await match.update(on: db)
         return match
@@ -172,7 +168,6 @@ struct GoMatchService {
                 throw Abort(.badRequest, reason: "Solo el alfitrion del grupo o quien realizo el request puede sacarlo del grupo")
             }
         }
-        
         if match.members.remove(getoutUser) == nil {
             throw Abort(.badRequest, reason: "Se intentó sacar a un miembro que no es parte del grupo")
         }
@@ -190,6 +185,26 @@ struct GoMatchService {
             throw Abort(.accepted, reason: "El alfitrion del grupo aún sigue verificando tu información")
         }
         throw Abort(.conflict, reason: "El alfitrion del grupo cancelo tu solicitud o el grupo ya no cumplica con tus preferencias")
+    }
+    
+    func match(user: GoUser, with match: GoMatch) async throws -> Bool {
+        let req = try await userService.select(id: user.id!)
+        let members = try await defineMembers(match: match)
+        
+        return GoMatch.preferencesMatching(requester: req, members: members) &&
+        GoMatch.nearest(from: user.currentUbication!, to: members)
+    }
+    
+    func depure(from match: GoMatch) async throws -> Set<MongoRef> {
+        let requests = try await defineRequests(match: match)
+        var newRequests: Set<MongoRef> = []
+        
+        for requester in requests {
+            if try await self.match(user: requester, with: match) {
+                newRequests.insert(MongoRef(id: requester.id!))
+            }
+        }
+        return newRequests
     }
     
     private func defineMembers(match: GoMatch) async throws -> [GoUser] {

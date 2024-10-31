@@ -33,6 +33,10 @@ final class Place: Fields, @unchecked Sendable, Content {
     init() { }
     
     init(latitude: Double, longitude: Double) {
+        self.country = ""
+        self.city = ""
+        self.name = ""
+        self.type = ""
         self.latitude = latitude
         self.longitude = longitude
     }

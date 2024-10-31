@@ -43,22 +43,36 @@ struct GoMatchController: RouteCollection {
     }
     
     @Sendable
-    func look(req: Request) async throws -> GoMatchDTO {
+    func look(req: Request) async throws -> Response {
         let matchService = try GoMatchService(on: req.db)
         
-        guard let matchRef: MongoRef = try? req.content.decode(MongoRef.self) else {
+        guard let request = try? req.content.decode(GoMatchRequest.self) else {
             throw Abort(.badRequest, reason: "match reference no es entendible")
         }
-        
-        let match = try await matchService.select(id: matchRef.id)
+        let match = try await matchService.look(request: request)
         
         switch match.status {
-        case .processing, .matched:
-            return try await match.toDTO(db: req.db);
+        case .processing:
+            let response = Response(status: .accepted)
+            let jsonBody = try await match.toDTO(db: req.db)
+            try response.content.encode(jsonBody, as: .json)
+            response.headers.add(name: .contentType, value: "application/json")
+            
+            return response
+        case .matched:
+            let travelService = try GoTravelService(on: req.db)
+            let travel = try await travelService
+                .select(id: match.travel!.id)
+                .toDTO(db: req.db)
+            let response = Response(status: .ok)
+            try response.content.encode(travel, as: .json)
+            response.headers.add(name: .contentType, value: "application/json")
+            
+            return response
         case .canceled:
-            throw Abort(.badRequest, reason: "El match ha sido cancelado por el lider del grupo")
+            throw Abort(.unprocessableEntity, reason: "El match ha sido cancelado por el lider del grupo")
         case .finalized:
-            throw Abort(.ok, reason: "El match ya ha finalizado correctamente")
+            throw Abort(.unprocessableEntity, reason: "El match ya ha finalizado correctamente")
         }
     }
     
@@ -70,11 +84,10 @@ struct GoMatchController: RouteCollection {
         let matchService = try GoMatchService(on: req.db)
         
         let matches = try await matchService.filter(matchable: matchable)
-        var matchesDTO: [GoMatchDTO] = []
         
+        var matchesDTO: [GoMatchDTO] = []
         for match in matches {
-            let dto = try await match.toDTO(db: req.db)
-            matchesDTO.append(dto)
+            matchesDTO.append(try await match.toDTO(db: req.db))
         }
         
         return matchesDTO
@@ -87,8 +100,6 @@ struct GoMatchController: RouteCollection {
         guard let matchable = try? req.content.decode(GoMatchRequest.self) else {
             throw Abort(.badRequest, reason: "Match request no es entendible")
         }
-        
-        print("hola bb")
         
         let match = try await matchService.select(id: matchable.matchId.id)
         let updatedMatch = try await matchService.add(from: match, requester: matchable.requesterId)
@@ -119,7 +130,7 @@ struct GoMatchController: RouteCollection {
         }
         let match = try await matchService.select(id: response.matchId.id)
         
-        let _ = try await matchService.decline(leader: response.requesterId, from: match, requester: response.userToGetout)
+        _ = try await matchService.decline(leader: response.requesterId, from: match, requester: response.userToGetout)
         
         if response.requesterId == match.leader {
             return Response(status: .ok, body: "Se ha eliminado la petición correctamente")
@@ -137,7 +148,7 @@ struct GoMatchController: RouteCollection {
         }
         let match = try await matchService.select(id: request.matchId.id)
         
-        let _ = try await matchService.getout(leader: request.requesterId, from: match, getoutUser: request.userToGetout)
+        _ = try await matchService.getout(leader: request.requesterId, from: match, getoutUser: request.userToGetout)
         
         if request.requesterId == match.leader {
             return Response(status: .ok, body: "Se ha sacado a un miembro del grupo correctamente correctamente")

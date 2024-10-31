@@ -40,7 +40,13 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     @Field(key: "travel")
     var travel: MongoRef?
     
-    init() { }
+    @Field(key: "current_meeting_point")
+    var currentMeetingPoint: Place?
+    
+    init() {
+        self.travel = nil
+        self.currentMeetingPoint = nil
+    }
     
     init(id: UUID? = nil, leader: MongoRef, members: Set<MongoRef>, requests: Set<MongoRef>, groupLength: Int, destination: Place, transport: TransportServices, status: Status) {
         self.id = id
@@ -51,6 +57,8 @@ final class GoMatch: Model, @unchecked Sendable, Content {
         self.destination = destination
         self.transport = transport
         self.status = status
+        self.travel = nil
+        self.currentMeetingPoint = nil
     }
     
     enum Status: Int, Content {
@@ -69,6 +77,28 @@ extension GoMatch {
         
         var places = users.map { $0.currentUbication! }
         places.append(request.currentUbication)
+        
+        for p in places {
+            print("p(lat:", p.latitude, " lon:", p.longitude, ")")
+        }
+        
+        let meetingPoint = Place.calculateMeetingPoint(of: places)
+        
+        print("meeting point lat:", meetingPoint.latitude, " lon:", meetingPoint.longitude)
+        
+        let h3Index = meetingPoint.toH3Index()
+        let distance = h3Distance(currentH3Index.value, h3Index.value)
+        
+        print("current h3 distance ", distance)
+        
+        return distance <= 5
+    }
+    
+    static func nearest(from point: Place, to users: [GoUser]) -> Bool {
+        let currentH3Index = point.toH3Index()
+        
+        var places = users.map { $0.currentUbication! }
+        places.append(point)
         
         for p in places {
             print("p(lat:", p.latitude, " lon:", p.longitude, ")")

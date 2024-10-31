@@ -36,7 +36,7 @@ extension GoTravel {
     }
 }
 
-struct GoTravelResponse: Content {
+struct GoTravelRequest: Content {
     var travelId: MongoRef
     var fromUser: MongoRef
 }

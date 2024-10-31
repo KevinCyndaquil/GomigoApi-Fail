@@ -40,4 +40,11 @@ final class GoUserService {
         
         return user
     }
+    
+    func setLocation(matchable: GoUserMatchable) async throws {
+        let user = try await select(id: matchable.userFindingMatches.id)
+        
+        user.currentUbication = matchable.currentUbication
+        try await user.update(on: db)
+    }
 }
