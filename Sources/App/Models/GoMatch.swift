@@ -20,7 +20,7 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     var leader: MongoRef // GoUser
     
     @Field(key: "members")
-    var members: Set<MongoRef> //GoUser
+    var members: Set<GoMember> //GoUser: GoTravel
     
     @Field(key: "requests")
     var requests: Set<MongoRef> //GoUser
@@ -37,9 +37,6 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     @Field(key: "status")
     var status: Status
     
-    @Field(key: "travel")
-    var travel: MongoRef?
-    
     @Field(key: "current_meeting_point")
     var currentMeetingPoint: Place?
     
@@ -47,12 +44,11 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     var creationDate: Date
     
     init() {
-        self.travel = nil
         self.currentMeetingPoint = nil
         self.creationDate = Date.now
     }
     
-    init(id: UUID? = nil, leader: MongoRef, members: Set<MongoRef>, requests: Set<MongoRef>, groupLength: Int, destination: Place, transport: TransportServices, status: Status, creationDate: Date) {
+    init(id: UUID? = nil, leader: MongoRef, members: Set<GoMember>, requests: Set<MongoRef>, groupLength: Int, destination: Place, transport: TransportServices, status: Status, creationDate: Date) {
         self.id = id
         self.leader = leader
         self.members = members
@@ -61,7 +57,6 @@ final class GoMatch: Model, @unchecked Sendable, Content {
         self.destination = destination
         self.transport = transport
         self.status = status
-        self.travel = nil
         self.currentMeetingPoint = nil
         self.creationDate = creationDate
     }
@@ -74,6 +69,20 @@ final class GoMatch: Model, @unchecked Sendable, Content {
     }
 }
 
+final class GoMember: Fields, @unchecked Sendable, Content {
+    @Field(key: "member")
+    var member: MongoRef
+    
+    @Field(key: "travel")
+    var travel: MongoRef?
+    
+    init() { }
+    
+    init(member: MongoRef, travel: MongoRef? = nil) {
+        self.member = member
+        self.travel = travel
+    }
+}
 
 extension GoMatch {
     
@@ -145,7 +154,7 @@ extension GoMatch {
     }
     
     func isCompleted() throws -> GoMatch {
-        if groupLength == members.count + 1 {
+        if groupLength == members.count {
             throw Abort(.badRequest, reason: "Grupo ya completado")
         }
         
@@ -161,5 +170,16 @@ extension GoMatch: Hashable {
     
     static func == (lhs: GoMatch, rhs: GoMatch) -> Bool {
         lhs.id == rhs.id
+    }
+}
+
+extension GoMember: Hashable {
+    
+    func hash(into hasher: inout Hasher) {
+        hasher.combine(member)
+    }
+    
+    static func == (lhs: GoMember, rhs: GoMember) -> Bool {
+        lhs.member == rhs.member
     }
 }

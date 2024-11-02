@@ -16,6 +16,9 @@ final class GoFilesId: Fields, @unchecked Sendable {
     @Field(key: "face_photo")
     var facePhoto: Data?
     
-    @Field(key: "personal_id")
-    var personalId: Data?
+    @Field(key: "front_personal_id")
+    var frontPersonalId: Data?
+    
+    @Field(key: "back_personal_id")
+    var backPersonalId: Data?
 }

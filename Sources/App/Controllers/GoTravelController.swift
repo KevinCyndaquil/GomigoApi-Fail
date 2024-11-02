@@ -26,4 +26,6 @@ struct GoTravelController: RouteCollection {
             .look(request: request)
             .toDTO(db: req.db)
     }
+    
+    
 }

@@ -12,12 +12,10 @@ struct GoUserDTO: Content {
     var id: UUID?
     var name: String
     var lastname: String
-    var nickname: String
     var birthday: Date
     var icon: Data?
     var score: Float
     var description: String
-    var online: Bool
 }
 
 extension GoUser {
@@ -26,24 +24,28 @@ extension GoUser {
             id: self.id,
             name: self.name,
             lastname: self.lastname,
-            nickname: self.nickname,
             birthday: self.birthday,
             score: self.score,
-            description: self.description,
-            online: self.online)
+            description: self.description)
     }
 }
 
 struct GoUserPost: Content {
     var name: String
     var lastname: String
-    var nickname: String
     var password: String
     var files: GoFilesId
+    var icon: Data?
     var properties: GoProperties
     var domicilie: GoDomicilie
-    var contact: GoContact
+    
+    var facebook: String?
+    var instagram: String?
+    var twitter: String?
+    var phoneNumber: String
+    var emailAddress: String
     var birthday: Date
+    
     var emergencyContact: [GoContact]
 }
 
@@ -52,7 +54,6 @@ extension GoUserPost {
         GoUser(
             name: self.name,
             lastname: self.lastname,
-            nickname: self.nickname,
             password: self.password,
             properties: self.properties,
             domicilie: self.domicilie,
@@ -63,8 +64,11 @@ extension GoUserPost {
             score: 0,
             description: "sin descripción",
             birthday: self.birthday,
-            contact: self.contact,
-            online: false,
+            facebook: self.facebook,
+            instagram: self.instagram,
+            twitter: self.twitter,
+            phoneNumber: self.phoneNumber,
+            emailAddress: self.emailAddress,
             friends: [],
             emergencyContact: self.emergencyContact)
     }

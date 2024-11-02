@@ -29,12 +29,11 @@ final class GoUserService {
     
     func login(credential: Credentials) async throws -> GoUser {
         guard let user = try? await GoUser.query(on: db)
-            .filter(\.$nickname == credential.username)
+            .filter(\.$emailAddress == credential.username)
             .filter(\.$password == credential.password)
             .first() else {
             throw Abort(.unauthorized, reason: "credenciales invalidas")
         }
-        user.online = true
         try await user.update(on: db)
         
         return user
@@ -64,11 +63,12 @@ final class GoUserService {
         
         // agregar filtro por pais y ciudad
         let pipeline: [AggregateBuilderStage] = [
-            //.match("creation_date" >= oneWeekAgo),
+            .match("creation_date" >= oneWeekAgo),
             .match([
                 "creation_date": ["$gte": oneWeekAgo],
                 "destination.country": country,
                 "destination.city": town,
+                "destination.name": [ "$ne": "null" ],
             ]),
             .init(document: ["$group": groupDocument]),
         ]

@@ -2,7 +2,6 @@
     {
         "name": "kevin alejandro",
         "lastname": "francisco gonzález",
-        "nickname": "kevincyn",
         "birthday": "2003-05-18T00:00:00Z",
         "password": "xd",
         "files": {
@@ -22,11 +21,9 @@
             "postalCode": "30795",
             "colony": "indeco"
         },
-        "contact": {
-            "phoneNumber": "962 185",
-            "emailAddress": "kevin@unach.mx",
-            "facebook": "http:/facebooj.com/kevin"
-        },
+        "phoneNumber": "962 185",
+        "emailAddress": "kevin@unach.mx",
+        "facebook": "http:/facebooj.com/kevin",
         "emergencyContact": []
     },
     {
@@ -52,11 +49,9 @@
             "postalCode": "30700",
             "colony": "centro"
         },
-        "contact": {
-            "phoneNumber": "962 269 6188",
-            "emailAddress": "eduardo.solorzano51@unach.mx",
-            "facebook": "http://facebook.com/eduardo"
-        },
+        "phoneNumber": "962 269 6188",
+        "emailAddress": "eduardo.solorzano51@unach.mx",
+        "facebook": "http://facebook.com/eduardo",
         "emergencyContact": []
     },
     {
@@ -71,7 +66,7 @@
         "properties": {
             "sex": "male",
             "gender": "male",
-            "nationality": "mexicano",
+            "nationality": "mexicano"
         },
         "domicilie": {
             "street": "calle 2",
@@ -82,11 +77,9 @@
             "postalCode": "30700",
             "colony": "centro"
         },
-        "contact": {
-            "phoneNumber": "962 150 7030",
-            "emailAddress": "alberto.palomeque@unach.mx",
-            "facebook": "http://facebook.com/alberto"
-        },
+        "phoneNumber": "962 150 7030",
+        "emailAddress": "alberto.palomeque@unach.mx",
+        "facebook": "http://facebook.com/alberto",
         "emergencyContact": []
     }
 ]

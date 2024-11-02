@@ -61,8 +61,10 @@ struct GoMatchController: RouteCollection {
             return response
         case .matched:
             let travelService = try GoTravelService(on: req.db)
+            let travelRef: MongoRef = match.members
+                .first(where: {$0.member == request.requesterId})!.travel!
             let travel = try await travelService
-                .select(id: match.travel!.id)
+                .select(id: travelRef.id)
                 .toDTO(db: req.db)
             let response = Response(status: .ok)
             try response.content.encode(travel, as: .json)

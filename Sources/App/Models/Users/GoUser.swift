@@ -20,9 +20,6 @@ final class GoUser: Model, @unchecked Sendable, Content {
     @Field(key: "lastname")
     var lastname: String
     
-    @Field(key: "nickname")
-    var nickname: String
-    
     @Field(key: "password")
     var password: String
     
@@ -56,14 +53,23 @@ final class GoUser: Model, @unchecked Sendable, Content {
     @Field(key: "birthday")
     var birthday: Date
     
-    @Field(key: "contact")
-    var contact: GoContact
+    @Field(key: "facebook")
+    var facebook: String?
+    
+    @Field(key: "instagram")
+    var instagram: String?
+    
+    @Field(key: "twitter")
+    var twitter: String?
+    
+    @Field(key: "phone_number")
+    var phoneNumber: String
+    
+    @Field(key: "email_address")
+    var emailAddress: String
     
     @Field(key: "current_ubication")
     var currentUbication: Place?
-    
-    @Field(key: "online")
-    var online: Bool
     
     @Field(key: "friends")
     var friends: [MongoRef] //GoUser
@@ -73,11 +79,10 @@ final class GoUser: Model, @unchecked Sendable, Content {
     
     init() { }
     
-    init(id: UUID? = nil, name: String, lastname: String, nickname: String, password: String, icon: Data? = nil, properties: GoProperties, domicilie: GoDomicilie, files: GoFilesId, travels: [MongoRef], preferences: GoPreferences, stadistics: GoStadistics, score: Float, description: String, birthday: Date, contact: GoContact, currentUbication: Place? = nil, online: Bool, friends: [MongoRef], emergencyContact: [GoContact]) {
+    init(id: UUID? = nil, name: String, lastname: String, password: String, icon: Data? = nil, properties: GoProperties, domicilie: GoDomicilie, files: GoFilesId, travels: [MongoRef], preferences: GoPreferences, stadistics: GoStadistics, score: Float, description: String, birthday: Date, facebook: String? = nil, instagram: String? = nil, twitter: String? = nil, phoneNumber: String, emailAddress: String, currentUbication: Place? = nil, friends: [MongoRef], emergencyContact: [GoContact]) {
         self.id = id
         self.name = name
         self.lastname = lastname
-        self.nickname = nickname
         self.password = password
         self.icon = icon
         self.properties = properties
@@ -89,9 +94,12 @@ final class GoUser: Model, @unchecked Sendable, Content {
         self.score = score
         self.description = description
         self.birthday = birthday
-        self.contact = contact
+        self.facebook = facebook
+        self.instagram = instagram
+        self.twitter = twitter
+        self.phoneNumber = phoneNumber
+        self.emailAddress = emailAddress
         self.currentUbication = currentUbication
-        self.online = online
         self.friends = friends
         self.emergencyContact = emergencyContact
     }

@@ -21,39 +21,39 @@ final class GoTravel: Model, @unchecked Sendable, Content {
     @Field(key: "destination")
     var destination: Place
     
-    @Field(key: "travelers")
-    var travelers: Set<MongoRef> //GoUser[]
+    @Field(key: "traveler")
+    var traveler: MongoRef //GoUser
+    
+    @Field(key: "match")
+    var match: MongoRef
     
     @Field(key: "meeting_date")
     var meetingDate: Date?
     
     @Field(key: "arrival_date")
     var arrivalDate: Date?
-    
-    @Field(key: "transport_service")
-    var transport: TransportServices
 
     @Field(key: "status")
     var status: Status
     
     init() { }
     
-    init(from match: GoMatch) {
+    init(from match: GoMatch, traveler: MongoRef) {
         self.meetingPoint = match.currentMeetingPoint!
         self.destination = match.destination
-        self.travelers = Set([match.leader]).union(match.members)
-        self.transport = match.transport
+        self.traveler = traveler
+        self.match = MongoRef(id: match.id!)
         self.status = .on_road
     }
     
-    init(id: UUID? = nil, meetingPoint: Place, destination: Place, travelers: Set<MongoRef>, meetingDate: Date? = nil, arrivalDate: Date? = nil, transport: TransportServices, status: Status) {
+    init(id: UUID? = nil, meetingPoint: Place, destination: Place, traveler: MongoRef, match: MongoRef, meetingDate: Date? = nil, arrivalDate: Date? = nil, status: Status) {
         self.id = id
         self.meetingPoint = meetingPoint
         self.destination = destination
-        self.travelers = travelers
+        self.traveler = traveler
+        self.match = match
         self.meetingDate = meetingDate
         self.arrivalDate = arrivalDate
-        self.transport = transport
         self.status = status
     }
     

@@ -27,7 +27,7 @@ struct GoMatchService {
         guard let match = try? await GoMatch.query(on: db)
             .filter(\.$id == id)
             .first() else {
-            throw Abort(.badRequest, reason: "id de match no encontrado")
+            throw Abort(.badRequest, reason: "Error al buscar un match")
         }
         return match
     }
@@ -47,16 +47,37 @@ struct GoMatchService {
         let match = try await select(id: request.matchId.id)
         
         if match.leader != request.requesterId {
-            if !match.members.contains(request.requesterId) {
+            if !match.members.contains(GoMember(member: request.requesterId)) {
                 throw Abort(.unauthorized, reason: "solo miembros del match pueden revisar su status")
             }
         }
         
-        if match.status == .matched && match.travel == nil {
-            let travel = GoTravel(from: match)
-            try await travel.save(on: db)
+        if match.status == .matched {
+            var assignedTravels = 0
             
-            match.travel = MongoRef(id: travel.id!)
+            let travel = GoTravel(from: match, traveler: request.requesterId)
+            try await travel.save(on: db)
+            let travelRef = MongoRef(id: travel.id!)
+            
+            let traveler = try await userService.select(id: request.requesterId.id)
+            traveler.travels.append(travelRef)
+            try await traveler.update(on: db)
+            
+            match.members = Set(match.members.map {
+                if $0.member == request.requesterId {
+                    $0.travel = travelRef
+                }
+                if $0.travel == nil {
+                    assignedTravels += 1
+                }
+                print($0.member.id, " ", $0.travel?.id ?? "nil")
+                return $0
+            })
+            
+            if assignedTravels == 0 {
+                match.status = .finalized
+            }
+            
             try await match.update(on: db)
         }
         
@@ -104,6 +125,9 @@ struct GoMatchService {
 
         _ = try await userService.select(id: reqRef.id)
         
+        if match.members.contains(GoMember(member: reqRef)) {
+            throw Abort(.badRequest, reason: "Usuario ya es miembro del grupo")
+        }
         if !match.requests.insert(reqRef).inserted {
             throw Abort(.badRequest, reason: "Usuario ya ha pedido unirse al grupo")
         }
@@ -124,11 +148,9 @@ struct GoMatchService {
             throw Abort(.badRequest, reason: "Intentas aceptar una peticion de un usuario que no ha hecho ninguna request")
         }
         
-        if !match.members.insert(requester).inserted {
-            throw Abort(.badRequest, reason: "Request aceptada ya se encontraba como miembro")
-        }
+        match.members.insert(GoMember(member: requester))
         
-        if match.members.count + 1 == match.groupLength {
+        if match.members.count == match.groupLength {
             match.status = .matched
             match.requests = []
         } else {
@@ -162,23 +184,34 @@ struct GoMatchService {
     
     func getout(leader: MongoRef?, from match: GoMatch, getoutUser: MongoRef) async throws -> GoMatch {
         let _ = try match.mustActive()
+        let gomember = GoMember(member: getoutUser)
         
         if match.leader != leader {
-            if !match.members.contains(getoutUser) {
+            if !match.members.contains(gomember) {
                 throw Abort(.badRequest, reason: "Solo el alfitrion del grupo o quien realizo el request puede sacarlo del grupo")
             }
         }
-        if match.members.remove(getoutUser) == nil {
+        if match.members.remove(gomember) == nil {
             throw Abort(.badRequest, reason: "Se intentó sacar a un miembro que no es parte del grupo")
         }
-        match.status = .processing
+        
+        if match.members.isEmpty {
+            match.status = .canceled
+        } else {
+            match.status = .processing
+            
+            if getoutUser == match.leader {
+                match.leader = match.members.first!.member
+            }
+        }
         
         try await match.update(on: db)
         return match
     }
     
     func wasAccepted(match: GoMatch, requester: MongoRef) throws -> GoMatch {
-        if match.members.contains(requester) {
+        let gomember = GoMember(member: requester)
+        if match.members.contains(gomember) {
             return match
         }
         if match.requests.contains(requester) {
@@ -208,11 +241,9 @@ struct GoMatchService {
     }
     
     private func defineMembers(match: GoMatch) async throws -> [GoUser] {
-        let leader = try await userService.select(id: match.leader.id)
-        
-        var userMembers: [GoUser] = [leader]
-        for member in match.members {
-            let user = try await userService.select(id: member.id)
+        var userMembers: [GoUser] = []
+        for gomember in match.members {
+            let user = try await userService.select(id: gomember.member.id)
             userMembers.append(user)
         }
         return userMembers

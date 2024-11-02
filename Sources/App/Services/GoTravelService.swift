@@ -33,10 +33,34 @@ final class GoTravelService {
     func look(request: GoTravelRequest) async throws -> GoTravel {
         let travel = try await select(id: request.travelId.id)
         
-        if !travel.travelers.contains(request.fromUser) {
+        if travel.traveler != request.fromUser {
             throw Abort(.unauthorized, reason: "no eres parte del viaje o necesitas confirmar tu participación para ver su status")
         }
         
+        return travel
+    }
+    
+    func arriveMeetingPoint(_ travelRef: MongoRef) async throws -> GoTravel {
+        let travel = try await select(id: travelRef.id)
+        travel.status = .at_meeting_point
+        
+        try await travel.update(on: db)
+        return travel
+    }
+    
+    func goingToDestination(_ travelRef: MongoRef) async throws -> GoTravel {
+        let travel = try await select(id: travelRef.id)
+        travel.status = .on_road
+        
+        try await travel.update(on: db)
+        return travel
+    }
+    
+    func arriveDestination(_ travelRef: MongoRef) async throws -> GoTravel {
+        let travel = try await select(id: travelRef.id)
+        travel.status = .finished
+        
+        try await travel.update(on: db)
         return travel
     }
 }

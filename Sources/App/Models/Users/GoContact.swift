@@ -11,7 +11,10 @@ import Fluent
 final class GoContact: Fields, @unchecked Sendable {
     
     @Field(key: "name")
-    var name: String?
+    var name: String
+    
+    @Field(key: "relationship")
+    var relantionship: String
     
     @Field(key: "phone_number")
     var phoneNumber: String

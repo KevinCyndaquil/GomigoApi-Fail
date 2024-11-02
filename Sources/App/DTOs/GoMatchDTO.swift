@@ -17,7 +17,6 @@ struct GoMatchDTO: Content {
     var transport: TransportServices
     var status: GoMatch.Status
     var request: [GoUserDTO]
-    var travel: GoTravel?
 }
 
 extension GoMatch {
@@ -29,8 +28,8 @@ extension GoMatch {
         }
         
         var members: [GoUserDTO] = []
-        for m in self.members {
-            guard let savedMember = try? await userService.select(id: m.id) else {
+        for mRef in self.members {
+            guard let savedMember = try? await userService.select(id: mRef.member.id) else {
                 throw Abort(.badGateway, reason: "member no pudo ser encontrado")
             }
             members.append(savedMember.toDTO())
@@ -52,8 +51,7 @@ extension GoMatch {
             destination: self.destination,
             transport: self.transport,
             status: self.status,
-            request: requests,
-            travel: nil)
+            request: requests)
     }
 }
 
@@ -70,7 +68,7 @@ extension GoUserMatchable {
     func toModel() -> GoMatch {
         GoMatch(
             leader: self.userFindingMatches,
-            members: [],
+            members: [GoMember(member: self.userFindingMatches)],
             requests: [],
             groupLength: self.groupLength,
             destination: self.destination,
