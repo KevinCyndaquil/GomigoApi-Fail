@@ -30,7 +30,7 @@ enum AgeRange: Int, Content {
         let calendar = Calendar.current
         let currentDate = Date()
         let ageComponents = calendar.dateComponents([.year], from: birthday, to: currentDate)
-        
+        //hola
         switch ageComponents.year ?? 0 {
         case ..<AgeRange.childhood.rawValue:
             return nil
